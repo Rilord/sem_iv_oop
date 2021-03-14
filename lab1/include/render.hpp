@@ -2,14 +2,6 @@
 #define RENDER_H_
 
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
-#define RESET   "\033[0m"
-#define RED "\033[31m"
-#define YELLOW "\033[33m"
-#define GREEN   "\033[32m"
-
-#define ERR_FLAG RED << "[ERROR]" << RESET
-#define WARNING_FLAG YELLOW << "[WARNING]" << RESET
-#define PROCEED_FLAG GREEN << "[ERROR]" << RESET
 
 #define SUCCESS (0x00)
 
@@ -19,6 +11,8 @@
 #define RENDER_LINLKING_ERR (0x06)
 
 #include "tinyobj_loader_c.h"
+#include "camera.hpp"
+#include "RenderLog.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -29,6 +23,12 @@ typedef struct {
     GLuint vb;
     int num;
 } DrawObject;
+
+typedef struct {
+    DrawObject model;
+    void (*render) (DrawObject &obj, camera_t &cam, GLFWwindow &window);
+
+} Renderer;
 
 #ifdef __linux__
 static const char * vs_src[] = 
@@ -106,7 +106,12 @@ int LoadShader(const char *vertex_path, const char *fragment_path);
 
 int loadObj(const char *filePath);
 
-int draw(DrawObject &obj);
+
+void setupModel(DrawObject &obj);
+
+void draw(DrawObject &obj, camera_t &cam, GLFWwindow &window);
+
+int setMat4(const std::string &name, const mat4 &mat);
 
 
 #endif /* RENDER_H_ */

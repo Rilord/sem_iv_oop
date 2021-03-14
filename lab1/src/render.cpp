@@ -1,110 +1,38 @@
 #include "render.hpp"
+#include "GLFW/glfw3.h"
+#include "camera.hpp"
 #include "tinyobj_loader_c.h"
 
-#include <cstring>
-#include <iostream>
-#include <fstream>
-#include <sys/mman.h>
 
-static char* mmap_file(size_t* len, const char* filename) {
-  FILE* f;
-  long file_size;
-  char* p;
-  int fd;
+void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
+    float v10[3];
+    float v20[3];
+    float len2;
 
-  (*len) = 0;
+    v10[0] = v1[0] - v0[0];
+    v10[1] = v1[1] - v0[1];
+    v10[2] = v1[2] - v0[2];
 
-  f = fopen(filename, "r");
-  if (!f) {
-    perror("open");
-    return NULL;
-  }
-  fseek(f, 0, SEEK_END);
-  file_size = ftell(f);
-  fclose(f);
+    v20[0] = v2[0] - v0[0];
+    v20[1] = v2[1] - v0[1];
+    v20[2] = v2[2] - v0[2];
 
+    N[0] = v20[1] * v10[2] - v20[2] * v10[1];
+    N[1] = v20[2] * v10[0] - v20[0] * v10[2];
+    N[0] = v20[0] * v10[1] - v20[1] * v10[0];
 
-  p = (char*)mmap(0, (size_t)file_size, PROT_READ, MAP_SHARED, fd, 0);
+    len2 = N[0] * N[0] + N[1] * N[1] + N[2] * N[2];
 
-  if (p == MAP_FAILED) {
-    perror("mmap");
-    return NULL;
-  }
+    if (len2 > 0.0f) {
+        float len = (float) sqrt((double) len2);
 
-
-  (*len) = (size_t)file_size;
-
-  return p;
-
-}
-
-static char* get_dirname(char* path) {
-  char* last_delim = NULL;
-
-  if (path == NULL) {
-    return path;
-  }
-
-#if defined(_WIN32)
-  /* TODO: Unix style path */
-  last_delim = strrchr(path, '\\');
-#else
-  last_delim = strrchr(path, '/');
-#endif
-
-  if (last_delim == NULL) {
-    /* no delimiter in the string. */
-    return path;
-  }
-
-  /* remove '/' */
-  last_delim[0] = '\0';
-
-  return path;
-}
-
-static void getFileData(void *ctx, const char *filename, const int is_mtl,
-        const char *obj_filename, char **data, size_t *len) {
-
-    (void) ctx;
-
-    if (!filename) {
-        std::cout << ERR_FLAG << "no filename\n";
-        (*data) = NULL;
-        (*len) = 0;
-        return;
-    }
-
-    const char *ext = strrchr(filename, '.');
-
-    size_t data_len = 0;
-
-    char *basedirname = NULL;
-
-    char tmp[1024];
-
-    tmp[0] = '\0';
-
-    if (is_mtl && obj_filename) {
-        basedirname = my_strdup(obj_filename, strlen(obj_filename));
-        basedirname = get_dirname(basedirname);
-    }
-
-    strncat(tmp, filename, 1023 - strlen(tmp));
-    tmp[strlen(tmp)] = '\0';
-
-    printf("tmp = %s\n", tmp);
-
-    if (basedirname) {
-        free(basedirname);
+        N[0] /= len;
+        N[1] /= len;
     }
 
 
-    *data = mmap_file(&data_len, tmp);
-
-
-    (*len) = data_len;
 }
+
 
 
 int LoadShader(const char *vertex_path, const char *fragment_path, GLuint program) {
@@ -197,7 +125,7 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
     return SUCCESS;
 }
 
-int loadObj(const char *filePath) {
+int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3]) {
 
     tinyobj_attrib_t attrib;
     tinyobj_shape_t *shapes = NULL;
@@ -217,6 +145,8 @@ int loadObj(const char *filePath) {
     std::cout << "number of shapes = " << (int) num_shapes << "\n";
     std::cout << "number of materials = " << (int) num_materials << "\n";
 
+    bmin[0] = bmin[1] = bmin[2] = FLT_MAX;
+    bmax[0] = bmax[1] = bmax[2] = -FLT_MAX;
     DrawObject o;
 
     float *vb;
@@ -255,11 +185,98 @@ int loadObj(const char *filePath) {
                 v[0][k] = attrib.vertices[3 * (size_t) f0 + k];
                 v[1][k] = attrib.vertices[3 * (size_t) f1 + k];
                 v[2][k] = attrib.vertices[3 * (size_t) f2 + k];
+                bmin[k] = (v[0][k] < bmin[k]) ? v[0][k] : bmin[k];
+                bmin[k] = (v[1][k] < bmin[k]) ? v[1][k] : bmin[k];
+                bmin[k] = (v[2][k] < bmin[k]) ? v[2][k] : bmin[k];
+                bmax[k] = (v[0][k] < bmax[k]) ? v[0][k] : bmax[k];
+                bmax[k] = (v[1][k] < bmax[k]) ? v[1][k] : bmax[k];
+                bmax[k] = (v[2][k] < bmax[k]) ? v[2][k] : bmax[k];
             }
+
+            if (attrib.num_normals > 0) {
+                int f0 = idx0.vn_idx;
+                int f1 = idx1.vn_idx;
+                int f2 = idx2.vn_idx;
+
+                if (f0 >= 0 && f1 >= 0 && f2 >= 0) {
+                    for (k = 0; k < 3; k++) {
+                        n[0][k] = attrib.normals[3 * (size_t) f0 + k];
+                        n[1][k] = attrib.normals[3 * (size_t) f1 + k];
+                        n[2][k] = attrib.normals[3 * (size_t) f2 + k];
+                    }
+                } else {
+                    getNormalToPlane(n[0], v[0], v[1], v[2]);
+                    n[1][0] = n[0][0];
+                    n[1][1] = n[0][1];
+                    n[1][2] = n[0][2];
+                    n[2][0] = n[0][0];
+                    n[2][1] = n[0][1];
+                    n[2][2] = n[0][2];
+                }
+
+                for (k = 0; k < 3; k++) {
+                    vb[(3 * i + k) * stride + 0] = v[k][0];
+                    vb[(3 * i + k) * stride + 1] = v[k][1];
+                    vb[(3 * i + k) * stride + 2] = v[k][2];
+                    vb[(3 * i + k) * stride + 3] = n[k][0];
+                    vb[(3 * i + k) * stride + 4] = n[k][1];
+                    vb[(3 * i + k) * stride + 5] = n[k][2];
+
+                    c[0] = n[k][0];
+                    c[1] = n[k][1];
+                    c[2] = n[k][2];
+                    len2 = c[0] * c[0] + c[1] * c[1] + c[2] * c[2];
+
+                    if (len2 > 0.0f) {
+                        float len = (float) sqrt((double) len2);
+
+                        c[0] /= len;
+                        c[1] /= len;
+                        c[2] /= len;
+                    }
+
+                    vb[(3 * i + k) * stride + 6] = (c[0] * 0.5f + 0.5f);
+                    vb[(3 * i + k) * stride + 7] = (c[1] * 0.5f + 0.5f);
+                    vb[(3 * i + k) * stride + 8] = (c[2] * 0.5f + 0.5f);
+                }
+            }
+
+            face_offset += (size_t) attrib.face_num_verts[i];
         }
+
+        o.vb = 0;
+
+        o.num = 0;
+
+        if (num_triangles > 0) {
+            glGenBuffers(1, &o.vb);
+            glBindBuffer(GL_ARRAY_BUFFER, o.vb);
+            glBufferData(GL_ARRAY_BUFFER,
+                    (GLsizeiptr) (num_triangles * 
+                        3 * stride * sizeof(float)), 
+                    vb, GL_STATIC_DRAW);
+            o.num = (int) num_triangles;
+        }
+
+        model = o;
+
+        free(vb);
+
     }
 
-
+    tinyobj_attrib_free(&attrib); 
+    tinyobj_shapes_free(shapes, num_shapes);
+    tinyobj_materials_free(materials, num_materials);
 
     return SUCCESS;
+}
+
+void draw(DrawObject &obj, camera_t &cam, GLFWwindow &window) {
+    glPolygonMode(GL_FRONT, GL_FILL);
+    glPolygonMode(GL_BACK, GL_FILL);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glVertexPointer(3, GL_FLOAT, 36, (const void *) 0);
+    glNormalPointer(GL_FLOAT, 36, (const void *)(sizeof(float) * 3));
+    glColorPointer(3, GL_FLOAT, 36, (const void *)(sizeof(float) * 6));
+    glDrawArrays(GL_TRIANGLES, 0, 3 * obj.num); 
 }
