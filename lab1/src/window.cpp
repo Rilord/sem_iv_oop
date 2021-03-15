@@ -89,8 +89,6 @@ void runLoop(window_t &window) {
 
         ImGui::Render();
 
-        window.renderer.render();
-
         glClearColor(0.3f, 0.5f, 0.6f, 1.f);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

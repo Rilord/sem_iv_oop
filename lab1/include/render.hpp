@@ -1,8 +1,6 @@
 #ifndef RENDER_H_
 #define RENDER_H_
 
-#define TINYOBJ_LOADER_C_IMPLEMENTATION
-
 #define SUCCESS (0x00)
 
 #define RENDER_FILE_READ_ERR (0x03)
@@ -10,7 +8,7 @@
 #define RENDER_FRAGMENT_SHADER_COMPILATION_ERR (0x05)
 #define RENDER_LINLKING_ERR (0x06)
 
-#include "tinyobj_loader_c.h"
+#include "obj_loader.hpp"
 #include "camera.hpp"
 #include "RenderLog.hpp"
 
@@ -100,9 +98,9 @@ static const char * fs_src[] =
 #endif /* APPLE */
 
 
-std::string readFile(const char *filePath);
+std::string readFile(const std::string &filePath);
 
-int LoadShader(const char *vertex_path, const char *fragment_path);
+int LoadShader(const char *vertex_path, const char *fragment_path, GLuint program);
 
 int loadObj(const char *filePath);
 
@@ -113,5 +111,9 @@ void draw(DrawObject &obj, camera_t &cam, GLFWwindow &window);
 
 int setMat4(const std::string &name, const mat4 &mat);
 
+void getFileData(void *ctx, const char *filename,
+        const char *obj_filename, char **data, size_t *len);
+
+int parse_obj_raw(obj_attrib_t &attrib, obj_shape_t **shapes, size_t &num_shapes, const char *filename);
 
 #endif /* RENDER_H_ */

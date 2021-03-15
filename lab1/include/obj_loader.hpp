@@ -59,17 +59,16 @@ typedef enum {
 #define OBJ_ERROR_INVALID_PARAMETER (-2)
 #define OBJ_ERROR_FILE_OPERATION (-3)
 
-typedef void (*file_reader_callback)(void *ctx, const char *filename, int is_mtl, const char *obj_filename, char **buf, size_t *len);
+typedef void (*file_reader_callback)(void *ctx, const char *filename, const char *obj_filename, char **buf, size_t *len);
 
-extern int tinyobj_parse_obj(obj_attrib_t *attrib, obj_shape_t **shapes,
-                             size_t *num_shapes,
-                             size_t *num_materials, const char *file_name, file_reader_callback file_reader,
+extern int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
+                             size_t &num_shapes, const char *file_name, file_reader_callback file_reader,
                              void *ctx, unsigned int flags);
 
 
-extern void obj_attrib_init(obj_attrib_t &attrib);
-extern void obj_attrib_free(obj_attrib_t &attrib);
-extern void obj_shapes_free(obj_shape_t *shapes, size_t num_shapes);
+extern inline void obj_attrib_init(obj_attrib_t &attrib);
+extern inline void obj_attrib_free(obj_attrib_t &attrib);
+extern inline void obj_shapes_free(obj_shape_t *shapes, size_t num_shapes);
 
 #include <stdio.h>
 #include <assert.h>
@@ -438,7 +437,7 @@ static char *my_strndup(const char *s, size_t len) {
   return d;
 }
 
-char *dynamic_fgets(char **buf, size_t *size, FILE *file) {
+inline char *dynamic_fgets(char **buf, size_t *size, FILE *file) {
   char *offset;
   char *ret;
   size_t old_size;
@@ -464,162 +463,6 @@ char *dynamic_fgets(char **buf, size_t *size, FILE *file) {
 }
 
 
-/* Implementation of string to int hashtable */
-
-#define HASH_TABLE_ERROR 1
-#define HASH_TABLE_SUCCESS 0
-
-#define HASH_TABLE_DEFAULT_SIZE 10
-
-typedef struct hash_table_entry_t
-{
-  unsigned long hash;
-  int filled;
-  int pad0;
-  long value;
-
-  struct hash_table_entry_t* next;
-} hash_table_entry_t;
-
-typedef struct
-{
-  unsigned long* hashes;
-  hash_table_entry_t* entries;
-  size_t capacity;
-  size_t n;
-} hash_table_t;
-
-static unsigned long hash_djb2(const unsigned char* str)
-{
-  unsigned long hash = 5381;
-  int c;
-
-  while ((c = *str++)) {
-    hash = ((hash << 5) + hash) + (unsigned long)(c);
-  }
-
-  return hash;
-}
-
-static void create_hash_table(size_t start_capacity, hash_table_t* hash_table)
-{
-  if (start_capacity < 1)
-    start_capacity = HASH_TABLE_DEFAULT_SIZE;
-  hash_table->hashes = (unsigned long*) OBJ_MALLOC(start_capacity * sizeof(unsigned long));
-  hash_table->entries = (hash_table_entry_t*) OBJ_CALLOC(start_capacity, sizeof(hash_table_entry_t));
-  hash_table->capacity = start_capacity;
-  hash_table->n = 0;
-}
-
-static void destroy_hash_table(hash_table_t* hash_table)
-{
-  OBJ_FREE(hash_table->entries);
-  OBJ_FREE(hash_table->hashes);
-}
-
-/* Insert with quadratic probing */
-static int hash_table_insert_value(unsigned long hash, long value, hash_table_t& hash_table)
-{
-  /* Insert value */
-  size_t start_index = hash % hash_table.capacity;
-  size_t index = start_index;
-  hash_table_entry_t* start_entry = hash_table.entries + start_index;
-  size_t i;
-  hash_table_entry_t* entry;
-
-  for (i = 1; hash_table.entries[index].filled; i++)
-  {
-    if (i >= hash_table.capacity)
-      return HASH_TABLE_ERROR;
-    index = (start_index + (i * i)) % hash_table.capacity;
-  }
-
-  entry = hash_table.entries + index;
-  entry->hash = hash;
-  entry->filled = 1;
-  entry->value = value;
-
-  if (index != start_index) {
-    /* This is a new entry, but not the start entry, hence we need to add a next pointer to our entry */
-    entry->next = start_entry->next;
-    start_entry->next = entry;
-  }
-
-  return HASH_TABLE_SUCCESS;
-}
-
-static int hash_table_insert(unsigned long hash, long value, hash_table_t& hash_table)
-{
-  int ret = hash_table_insert_value(hash, value, hash_table);
-  if (ret == HASH_TABLE_SUCCESS)
-  {
-    hash_table.hashes[hash_table.n] = hash;
-    hash_table.n++;
-  }
-  return ret;
-}
-
-static hash_table_entry_t& hash_table_find(unsigned long hash, hash_table_t& hash_table)
-{
-  hash_table_entry_t *entry = hash_table.entries + (hash % hash_table.capacity);
-  while (entry)
-  {
-    if (entry->hash == hash && entry->filled)
-    {
-      return *entry;
-    }
-    entry = entry->next;
-  }
-  return *hash_table.entries;
-}
-
-static void hash_table_maybe_grow(size_t new_n, hash_table_t& hash_table)
-{
-  size_t new_capacity;
-  hash_table_t new_hash_table;
-  size_t i;
-
-  if (new_n <= hash_table.capacity) {
-    return;
-  }
-  new_capacity = 2 * ((2 * hash_table.capacity) > new_n ? hash_table.capacity : new_n);
-  /* Create a new hash table. We're not calling create_hash_table because we want to realloc the hash array */
-  new_hash_table.hashes = hash_table.hashes = (unsigned long*) OBJ_REALLOC((void*) hash_table.hashes, sizeof(unsigned long) * new_capacity);
-  new_hash_table.entries = (hash_table_entry_t*) OBJ_CALLOC(new_capacity, sizeof(hash_table_entry_t));
-  new_hash_table.capacity = new_capacity;
-  new_hash_table.n = hash_table.n;
-
-  /* Rehash */
-  for (i = 0; i < hash_table.capacity; i++)
-  {
-    hash_table_entry_t& entry = hash_table_find(hash_table.hashes[i], hash_table);
-    hash_table_insert_value(hash_table.hashes[i], entry.value, new_hash_table);
-  }
-
-  OBJ_FREE(hash_table.entries);
-  (hash_table) = new_hash_table;
-}
-
-static int hash_table_exists(const char* name, hash_table_t& hash_table)
-{
-  return hash_table_find(hash_djb2((const unsigned char*)name), hash_table).value != hash_table.entries[0].value;
-}
-
-static void hash_table_set(const char* name, size_t val, hash_table_t& hash_table)
-{
-  /* Hash name */
-  unsigned long hash = hash_djb2((const unsigned char *)name);
-
-  hash_table_entry_t& entry = hash_table_find(hash, hash_table);
-  entry.value = (long)val;
-  return;
-}
-
-static long hash_table_get(const char* name, hash_table_t& hash_table)
-{
-    hash_table_entry_t& ret = hash_table_find(hash_djb2((const unsigned char*)(name)), hash_table);
-    return ret.value;
-}
 
 static int is_line_ending(const char *p, size_t i, size_t end_i) {
   if (p[i] == '\0') return 1;
@@ -830,10 +673,9 @@ static int parseLine(Command &command, const char *p, size_t p_len,
     return 0;
 }
 
-int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
-        size_t *num_shapes, const char *obj_filename,
-        file_reader_callback file_reader, void *ctx,
-        unsigned int flags) {
+inline int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
+                             size_t &num_shapes, const char *file_name, file_reader_callback file_reader,
+                             void *ctx, unsigned int flags) {
     LineInfo *line_infos = NULL;
     Command *commands = NULL;
     size_t num_lines = 0;
@@ -846,11 +688,10 @@ int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
 
     char *buf = NULL;
     size_t len = 0;
-    file_reader(ctx, obj_filename, /* is_mtl */0, obj_filename, &buf, &len);
+    file_reader(ctx, file_name, file_name, &buf, &len);
 
     if (len < 1) return OBJ_ERROR_INVALID_PARAMETER;
     if (shapes == NULL) return OBJ_ERROR_INVALID_PARAMETER;
-    if (num_shapes == NULL) return OBJ_ERROR_INVALID_PARAMETER;
     if (buf == NULL) return OBJ_ERROR_INVALID_PARAMETER;
 
     obj_attrib_init(attrib);
@@ -1039,7 +880,7 @@ int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
              * shape information. */
         }
 
-        (*num_shapes) = shape_idx;
+        (num_shapes) = shape_idx;
     }
 
     if (commands) {
@@ -1080,106 +921,4 @@ void obj_shapes_free(obj_shape_t *shapes, size_t num_shapes) {
 
     OBJ_FREE(shapes);
 }
-
-static char* mmap_file(size_t* len, const char* filename) {
-  FILE* f;
-  long file_size;
-  char* p;
-  int fd;
-
-  (*len) = 0;
-
-  f = fopen(filename, "r");
-  if (!f) {
-    perror("open");
-    return NULL;
-  }
-  fseek(f, 0, SEEK_END);
-  file_size = ftell(f);
-  fclose(f);
-
-
-  p = (char*)mmap(0, (size_t)file_size, PROT_READ, MAP_SHARED, fd, 0);
-
-  if (p == MAP_FAILED) {
-    perror("mmap");
-    return NULL;
-  }
-
-
-  (*len) = (size_t)file_size;
-
-  return p;
-
-}
-
-static char* get_dirname(char* path) {
-  char* last_delim = NULL;
-
-  if (path == NULL) {
-    return path;
-  }
-
-#if defined(_WIN32)
-  /* TODO: Unix style path */
-  last_delim = strrchr(path, '\\');
-#else
-  last_delim = strrchr(path, '/');
-#endif
-
-  if (last_delim == NULL) {
-    /* no delimiter in the string. */
-    return path;
-  }
-
-  /* remove '/' */
-  last_delim[0] = '\0';
-
-  return path;
-}
-
-static void getFileData(void *ctx, const char *filename,
-        const char *obj_filename, char **data, size_t *len) {
-
-    (void) ctx;
-
-    if (!filename) {
-        std::cout << ERR_FLAG << "no filename\n";
-        (*data) = NULL;
-        (*len) = 0;
-        return;
-    }
-
-    const char *ext = strrchr(filename, '.');
-
-    size_t data_len = 0;
-
-    char *basedirname = NULL;
-
-    char tmp[1024];
-
-    tmp[0] = '\0';
-
-    strncat(tmp, filename, 1023 - strlen(tmp));
-    tmp[strlen(tmp)] = '\0';
-
-    printf("tmp = %s\n", tmp);
-
-    if (basedirname) {
-        free(basedirname);
-    }
-
-
-    *data = mmap_file(&data_len, tmp);
-
-
-    (*len) = data_len;
-}
-
-
-int parse_obj() {
-  int rc = obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes, size_t *num_shapes, const char *obj_filename, file_reader_callback file_reader, void *ctx, unsigned int flags)
-  
-}
-
 #endif /* TINOBJ_LOADER_C_H_ */

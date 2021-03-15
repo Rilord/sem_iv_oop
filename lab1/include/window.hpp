@@ -17,7 +17,7 @@
 
 typedef struct {
     GLFWwindow *window;
-    render_t *renderer;
+    Renderer *renderer;
 } window_t;
 
 GLFWwindow *startWindowContext();

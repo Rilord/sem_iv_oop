@@ -32,17 +32,12 @@ endif()
 
 # GLEW 
 
-#find_library(GLEW_DYLIB GLEW ${CMAKE_SOURCE_DIR}/external/glew/lib)
-#add_library(glew SHARED IMPORTED)
-#set_property(TARGET glew PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/glew/lib/libGLEW.2.2.0.dylib)
-#set_property(TARGET glew PROPERTY IMPORTED_IMPLIB ${GLEW_DYLIB})
+find_library(GLEW_DYLIB GLEW ${CMAKE_SOURCE_DIR}/external/glew/lib)
+add_library(glew SHARED IMPORTED)
+set_property(TARGET glew PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/glew/lib/libGLEW.2.2.0.dylib)
+set_property(TARGET glew PROPERTY IMPORTED_IMPLIB ${GLEW_DYLIB})
 
 
-find_package(GLEW REQUIRED)
-if (GLEW_FOUND)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    link_libraries(${GLEW_LIBRARIES})
-endif()
 
 ######
 

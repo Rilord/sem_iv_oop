@@ -1,8 +1,85 @@
 #include "render.hpp"
 #include "GLFW/glfw3.h"
 #include "camera.hpp"
-#include "tinyobj_loader_c.h"
+#include "obj_loader.hpp"
 
+
+std::string readFile(const std::string &filePath) {
+    std::string content;
+    std::ifstream fileStream(filePath, std::ios::in);
+
+    if (!fileStream.is_open()) {
+        std::cerr << "Failed to read Shader file " 
+                << filePath << ". File was not received\n";
+        return "";
+    }
+
+    std::string line = "";
+    while (!fileStream.eof()) {
+        std::getline(fileStream, line);
+        content.append(line + '\n');
+    }
+
+    fileStream.close();
+    return content;
+}
+
+static char* mmap_file(size_t* len, const char* filename) {
+  FILE* f;
+  long file_size;
+  char* p;
+  int fd;
+
+  (*len) = 0;
+
+  f = fopen(filename, "r");
+  if (!f) {
+    perror("open");
+    return NULL;
+  }
+  fseek(f, 0, SEEK_END);
+  file_size = ftell(f);
+  fclose(f);
+
+
+  p = (char*)mmap(0, (size_t)file_size, PROT_READ, MAP_SHARED, fd, 0);
+
+  if (p == MAP_FAILED) {
+    perror("mmap");
+    return NULL;
+  }
+
+
+  (*len) = (size_t)file_size;
+
+  return p;
+
+}
+
+static char* get_dirname(char* path) {
+  char* last_delim = NULL;
+
+  if (path == NULL) {
+    return path;
+  }
+
+#if defined(_WIN32)
+  /* TODO: Unix style path */
+  last_delim = strrchr(path, '\\');
+#else
+  last_delim = strrchr(path, '/');
+#endif
+
+  if (last_delim == NULL) {
+    /* no delimiter in the string. */
+    return path;
+  }
+
+  /* remove '/' */
+  last_delim[0] = '\0';
+
+  return path;
+}
 
 void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
     float v10[3];
@@ -125,22 +202,80 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
     return SUCCESS;
 }
 
+void getFileData(void* ctx, const char* filename,
+                          const char* obj_filename, char** data, size_t* len) {
+  (void)ctx;
+
+  if (!filename) {
+    fprintf(stderr, "null filename\n");
+    (*data) = NULL;
+    (*len) = 0;
+    return;
+  }
+
+  const char* ext = strrchr(filename, '.');
+
+  size_t data_len = 0;
+
+  if (strcmp(ext, ".gz") == 0) {
+    assert(0); /* todo */
+
+  } else {
+    char* basedirname = NULL;
+
+    char tmp[1024];
+    tmp[0] = '\0';
+
+    /* For .mtl, extract base directory path from .obj filename and append .mtl
+     * filename */
+
+    if (basedirname) {
+      strncpy(tmp, basedirname, strlen(basedirname));
+
+#if defined(_WIN32)
+      strncat(tmp, "/", 1023 - strlen(tmp));
+#else
+      strncat(tmp, "/", 1023 - strlen(tmp));
+#endif
+      strncat(tmp, filename, 1023 - strlen(tmp));
+      tmp[strlen(tmp)] = '\0';
+    } else {
+      strncpy(tmp, filename, strlen(filename));
+      tmp[strlen(tmp)] = '\0';
+    }
+
+    printf("tmp = %s\n", tmp);
+
+    if (basedirname) {
+      free(basedirname);
+    }
+
+    *data = mmap_file(&data_len, tmp);
+  }
+
+  (*len) = data_len;
+}
+
+int parse_obj_raw(obj_attrib_t &attrib, obj_shape_t **shapes, size_t &num_shapes, const char *filename) {
+    int rc = obj_parse_obj(attrib, shapes, num_shapes, filename, getFileData, NULL, OBJ_FLAG_TRIANGULATE);
+
+    if (rc != OBJ_SUCCESS) {
+        return -1;
+    }
+    return SUCCESS; 
+}
+
 int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3]) {
 
-    tinyobj_attrib_t attrib;
-    tinyobj_shape_t *shapes = NULL;
+    obj_attrib_t attrib;
+    obj_shape_t *shapes = NULL;
     size_t num_shapes;
-    tinyobj_material_t *materials = NULL;
     size_t num_materials;
+    
+    if (parse_obj_raw(attrib, &shapes, num_shapes, filePath))
+        return -1;
 
-    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
 
-    int rc = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials, 
-            &num_materials, filePath, getFileData, NULL, flags);
-
-    if (rc != TINYOBJ_SUCCESS) {
-        return 0;
-    }
 
     std::cout << "number of shapes = " << (int) num_shapes << "\n";
     std::cout << "number of materials = " << (int) num_materials << "\n";
@@ -173,9 +308,9 @@ int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3
             float c[3];
             float len2;
 
-            tinyobj_vertex_index_t idx0 = attrib.faces[face_offset + 3 * f + 0];
-            tinyobj_vertex_index_t idx1 = attrib.faces[face_offset + 3 * f + 1];
-            tinyobj_vertex_index_t idx2 = attrib.faces[face_offset + 3 * f + 2];
+            obj_vertex_index_t idx0 = attrib.faces[face_offset + 3 * f + 0];
+            obj_vertex_index_t idx1 = attrib.faces[face_offset + 3 * f + 1];
+            obj_vertex_index_t idx2 = attrib.faces[face_offset + 3 * f + 2];
 
             for (k = 0; k < 3; k++) {
                 int f0 = idx0.v_idx;
@@ -264,9 +399,8 @@ int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3
 
     }
 
-    tinyobj_attrib_free(&attrib); 
-    tinyobj_shapes_free(shapes, num_shapes);
-    tinyobj_materials_free(materials, num_materials);
+    obj_attrib_free(attrib); 
+    obj_shapes_free(shapes, num_shapes);
 
     return SUCCESS;
 }
