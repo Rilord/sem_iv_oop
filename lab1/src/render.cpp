@@ -2,26 +2,32 @@
 #include "GLFW/glfw3.h"
 #include "camera.hpp"
 #include "obj_loader.hpp"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <math.h>
 
 
-std::string readFile(const std::string &filePath) {
-    std::string content;
-    std::ifstream fileStream(filePath, std::ios::in);
 
-    if (!fileStream.is_open()) {
-        std::cerr << "Failed to read Shader file " 
-                << filePath << ". File was not received\n";
-        return "";
-    }
+const char *readFile(const char *filePath) {
+    char *buf = 0;
+    size_t len;
+    FILE *f = fopen(filePath, "r");
 
-    std::string line = "";
-    while (!fileStream.eof()) {
-        std::getline(fileStream, line);
-        content.append(line + '\n');
-    }
+    if (!f)
+        return NULL;
 
-    fileStream.close();
-    return content;
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    buf = (char *) malloc(len);
+
+    if (!buf) 
+        return NULL;
+
+    fread(buf, 1, len, f);
+    return buf;
 }
 
 static char* mmap_file(size_t* len, const char* filename) {
@@ -63,12 +69,7 @@ static char* get_dirname(char* path) {
     return path;
   }
 
-#if defined(_WIN32)
-  /* TODO: Unix style path */
-  last_delim = strrchr(path, '\\');
-#else
   last_delim = strrchr(path, '/');
-#endif
 
   if (last_delim == NULL) {
     /* no delimiter in the string. */
@@ -81,7 +82,7 @@ static char* get_dirname(char* path) {
   return path;
 }
 
-void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
+static void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
     float v10[3];
     float v20[3];
     float len2;
@@ -117,11 +118,9 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 
     /* Load shaders */
-    std::string vertShaderStr = readFile(vertex_path);
-    std::string fragShaderStr = readFile(fragment_path);
 
-    const char *vertShaderSrc = vertShaderStr.c_str();
-    const char *fragShaderSrc = fragShaderStr.c_str();
+    const char *vertShaderSrc = readFile(vertex_path);
+    const char *fragShaderSrc = readFile(fragment_path);
 
     GLint result = GL_FALSE;
     int logLen;

@@ -20,10 +20,16 @@ typedef struct {
     Renderer *renderer;
 } window_t;
 
-GLFWwindow *startWindowContext();
+GLFWwindow *startWindowContext(const int width, const int height);
+
+int initImGui(GLFWwindow &window);
 
 int runGLEW();
 
-void setCallbacks();
+int initimgui(window_t &window);
+
+void runLoop(window_t &window);
+
+void setCallbacks(window_t &window);
 
 #endif /* WINDOW_H_ */

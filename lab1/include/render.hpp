@@ -15,7 +15,6 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
-#include <string>
 
 typedef struct {
     GLuint vb;
@@ -98,7 +97,7 @@ static const char * fs_src[] =
 #endif /* APPLE */
 
 
-std::string readFile(const std::string &filePath);
+const char *readFile(const char *filePath);
 
 int LoadShader(const char *vertex_path, const char *fragment_path, GLuint program);
 

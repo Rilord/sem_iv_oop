@@ -48,7 +48,7 @@ int runGLEW() {
     return WINDOW_SUCCESS;
 }
 
-int initImGui(GLFWwindow &window) {
+int initimgui(window_t &window) {
 
 #ifdef __APPLE__
     const char *glsl_version = "#version 150";
@@ -69,7 +69,7 @@ int initImGui(GLFWwindow &window) {
     ImGuiIO &io = ImGui::GetIO();
     (void) io;
 
-    ImGui_ImplGlfw_InitForOpenGL(&window, true);
+    ImGui_ImplGlfw_InitForOpenGL(window.window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     io.Fonts->AddFontDefault();
@@ -101,7 +101,8 @@ void runLoop(window_t &window) {
 }
 
 
-void setCallbacks(GLFWwindow &window) {
+void setCallbacks(window_t &window) {
     glfwSetErrorCallback(error_callback);
-    glfwSetKeyCallback(&window, key_callback);
+    glfwSetKeyCallback(window.window, key_callback);
 }
+
