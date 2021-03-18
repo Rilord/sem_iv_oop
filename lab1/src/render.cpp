@@ -6,8 +6,79 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <fcntl.h>
 #include <math.h>
 
+#ifdef __linux__
+
+static float prevMouseX, prevMouseY;
+
+static const char vs_src[] = 
+{
+    "#version 330\n"
+    "layout (location = 0) in vec3 inPos;\n"
+    "layout (location = 1) in vec3 inCol;\n"
+    "out vec3 vertCol;\n"
+    "uniform mat4 projectionMat;\n"
+    "uniform mat4 viewMat;\n"
+    "uniform mat4 modelMat;\n"
+    "void main()\n"
+    "{\n"
+    "    vertCol       = inCol;\n"
+    "    vec4 modelPos = modelMat * vec4( inPos, 1.0 );\n"
+    "    vec4 viewPos  = viewMat * modelPos;\n"
+    "    gl_Position   = projectionMat * viewPos;\n"
+    "}\n"
+};
+
+static const char fs_src[] = 
+{
+    "#version 400\n"
+    "in vec3 vertCol;\n"
+    "\n"
+    "out vec4 fragColor;\n"
+    "\n"
+    "void main()\n"
+    "{\n"
+    "    fragColor = vec4( vertCol, 1.0 );\n"
+    "}\n"
+};
+
+#endif /* linux */
+
+#ifdef __APPLE__
+static const char vs_src[] = 
+{
+    "#version 140\n"
+    "layout (location = 0) in vec3 inPos;\n"
+    "layout (location = 1) in vec3 inCol;\n"
+    "out vec3 vertCol;\n"
+    "uniform mat4 projectionMat;\n"
+    "uniform mat4 viewMat;\n"
+    "uniform mat4 modelMat;\n"
+    "void main()\n"
+    "{\n"
+    "    vertCol       = inCol;\n"
+    "    vec4 modelPos = modelMat * vec4( inPos, 1.0 );\n"
+    "    vec4 viewPos  = viewMat * modelPos;\n"
+    "    gl_Position   = projectionMat * viewPos;\n"
+    "}\n"
+};
+
+
+static const char fs_src[] = 
+{
+    "#version 140\n"
+    "in vec3 vertCol;\n"
+    "\n"
+    "out vec4 fragColor;\n"
+    "\n"
+    "void main()\n"
+    "{\n"
+    "    fragColor = vec4( vertCol, 1.0 );\n"
+    "}\n"
+};
+#endif /* APPLE */
 
 
 const char *readFile(const char *filePath) {
@@ -43,43 +114,50 @@ static char* mmap_file(size_t* len, const char* filename) {
     perror("open");
     return NULL;
   }
+
   fseek(f, 0, SEEK_END);
   file_size = ftell(f);
   fclose(f);
 
+  printf("%zd\n", file_size);
+
+  fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+      perror("open");
+      return NULL;
+  }
 
   p = (char*)mmap(0, (size_t)file_size, PROT_READ, MAP_SHARED, fd, 0);
 
   if (p == MAP_FAILED) {
-    perror("mmap");
-    return NULL;
+      perror("mmap");
+      return NULL;
   }
 
-
-  (*len) = (size_t)file_size;
+  (*len) = (size_t) file_size;
 
   return p;
 
 }
 
 static char* get_dirname(char* path) {
-  char* last_delim = NULL;
+    char* last_delim = NULL;
 
-  if (path == NULL) {
+    if (path == NULL) {
+        return path;
+    }
+
+    last_delim = strrchr(path, '/');
+
+    if (last_delim == NULL) {
+        /* no delimiter in the string. */
+        return path;
+    }
+
+    /* remove '/' */
+    last_delim[0] = '\0';
+
     return path;
-  }
-
-  last_delim = strrchr(path, '/');
-
-  if (last_delim == NULL) {
-    /* no delimiter in the string. */
-    return path;
-  }
-
-  /* remove '/' */
-  last_delim[0] = '\0';
-
-  return path;
 }
 
 static void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
@@ -107,28 +185,21 @@ static void getNormalToPlane(vec3f N, vec3f v0, vec3f v1, vec3f v2) {
         N[0] /= len;
         N[1] /= len;
     }
-
-
 }
 
-
-
-int LoadShader(const char *vertex_path, const char *fragment_path, GLuint program) {
+int LoadShader(const char *vs, const char *fs, GLuint program) {
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 
     /* Load shaders */
 
-    const char *vertShaderSrc = readFile(vertex_path);
-    const char *fragShaderSrc = readFile(fragment_path);
 
     GLint result = GL_FALSE;
     int logLen;
 
-    std::cout << PROCEED_FLAG << "Compiling vertex shader.\n";
 
     /* Compile vertex shader */
-    glShaderSource(vertShader, 1, &vertShaderSrc, NULL);
+    glShaderSource(vertShader, 1, &vs, NULL);
     glCompileShader(vertShader);
 
     glGetShaderiv(vertShader, GL_COMPILE_STATUS, &result);
@@ -142,16 +213,14 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
 
         glGetShaderInfoLog(vertShader, logLen, NULL, &ErrorLog[0]);
 
-        std::cout << ERR_FLAG << ErrorLog << "\n";
 
         return RENDER_VERTEX_SHADER_COMPILATION_ERR;
 
     }
 
-    std::cout << PROCEED_FLAG << "Compiling fragment shader.\n";
 
     /* Compile fragment shader */
-    glShaderSource(fragShader, 1, &fragShaderSrc, NULL);
+    glShaderSource(fragShader, 1, &fs, NULL);
     glCompileShader(fragShader);
 
     glGetShaderiv(fragShader, GL_COMPILE_STATUS, &result);
@@ -165,15 +234,12 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
 
         glGetShaderInfoLog(fragShader, logLen, NULL, &ErrorLog[0]);
 
-        std::cout << ERR_FLAG << ErrorLog << "\n";
 
         return RENDER_VERTEX_SHADER_COMPILATION_ERR;
 
     }
 
     /* Linking program */
-
-    std::cout << PROCEED_FLAG << "Linking program\n";
 
     glAttachShader(program, vertShader);
     glAttachShader(program, fragShader);
@@ -189,7 +255,6 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
 
         glGetShaderInfoLog(fragShader, logLen, NULL, &ErrorLog[0]);
 
-        std::cout << ERR_FLAG << ErrorLog << "\n";
 
         glDeleteShader(fragShader);
         glDeleteShader(vertShader);
@@ -202,57 +267,57 @@ int LoadShader(const char *vertex_path, const char *fragment_path, GLuint progra
 }
 
 void getFileData(void* ctx, const char* filename,
-                          const char* obj_filename, char** data, size_t* len) {
-  (void)ctx;
+        const char* obj_filename, char** data, size_t* len) {
+    (void)ctx;
 
-  if (!filename) {
-    fprintf(stderr, "null filename\n");
-    (*data) = NULL;
-    (*len) = 0;
-    return;
-  }
+    if (!filename) {
+        fprintf(stderr, "null filename\n");
+        (*data) = NULL;
+        (*len) = 0;
+        return;
+    }
 
-  const char* ext = strrchr(filename, '.');
+    const char* ext = strrchr(filename, '.');
 
-  size_t data_len = 0;
+    size_t data_len = 0;
 
-  if (strcmp(ext, ".gz") == 0) {
-    assert(0); /* todo */
+    if (strcmp(ext, ".gz") == 0) {
+        assert(0); /* todo */
 
-  } else {
-    char* basedirname = NULL;
+    } else {
+        char* basedirname = NULL;
 
-    char tmp[1024];
-    tmp[0] = '\0';
+        char tmp[1024];
+        tmp[0] = '\0';
 
-    /* For .mtl, extract base directory path from .obj filename and append .mtl
-     * filename */
+        /* For .mtl, extract base directory path from .obj filename and append .mtl
+         * filename */
 
-    if (basedirname) {
-      strncpy(tmp, basedirname, strlen(basedirname));
+        if (basedirname) {
+            strncpy(tmp, basedirname, strlen(basedirname));
 
 #if defined(_WIN32)
-      strncat(tmp, "/", 1023 - strlen(tmp));
+            strncat(tmp, "/", 1023 - strlen(tmp));
 #else
-      strncat(tmp, "/", 1023 - strlen(tmp));
+            strncat(tmp, "/", 1023 - strlen(tmp));
 #endif
-      strncat(tmp, filename, 1023 - strlen(tmp));
-      tmp[strlen(tmp)] = '\0';
-    } else {
-      strncpy(tmp, filename, strlen(filename));
-      tmp[strlen(tmp)] = '\0';
+            strncat(tmp, filename, 1023 - strlen(tmp));
+            tmp[strlen(tmp)] = '\0';
+        } else {
+            strncpy(tmp, filename, strlen(filename));
+            tmp[strlen(tmp)] = '\0';
+        }
+
+        printf("tmp = %s\n", tmp);
+
+        if (basedirname) {
+            free(basedirname);
+        }
+
+        *data = mmap_file(&data_len, filename);
     }
 
-    printf("tmp = %s\n", tmp);
-
-    if (basedirname) {
-      free(basedirname);
-    }
-
-    *data = mmap_file(&data_len, tmp);
-  }
-
-  (*len) = data_len;
+    (*len) = data_len;
 }
 
 int parse_obj_raw(obj_attrib_t &attrib, obj_shape_t **shapes, size_t &num_shapes, const char *filename) {
@@ -269,15 +334,13 @@ int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3
     obj_attrib_t attrib;
     obj_shape_t *shapes = NULL;
     size_t num_shapes;
-    size_t num_materials;
-    
+
     if (parse_obj_raw(attrib, &shapes, num_shapes, filePath))
         return -1;
 
 
 
     std::cout << "number of shapes = " << (int) num_shapes << "\n";
-    std::cout << "number of materials = " << (int) num_materials << "\n";
 
     bmin[0] = bmin[1] = bmin[2] = FLT_MAX;
     bmax[0] = bmax[1] = bmax[2] = -FLT_MAX;
@@ -404,12 +467,34 @@ int loadObj(DrawObject &model, const char *filePath, float bmin[3], float bmax[3
     return SUCCESS;
 }
 
-void draw(DrawObject &obj, camera_t &cam, GLFWwindow &window) {
+void draw(window_t &window) {
+    mat4 perspective;
+    mat4 view;
+    cameraGetPerspective(window.cam, perspective);
+    cameraLookAt(window.cam, view);
+    setMat4(window.program, "projectionMat", perspective);
+    setMat4(window.program, "viewMat", view);
+
     glPolygonMode(GL_FRONT, GL_FILL);
     glPolygonMode(GL_BACK, GL_FILL);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glVertexPointer(3, GL_FLOAT, 36, (const void *) 0);
     glNormalPointer(GL_FLOAT, 36, (const void *)(sizeof(float) * 3));
     glColorPointer(3, GL_FLOAT, 36, (const void *)(sizeof(float) * 6));
-    glDrawArrays(GL_TRIANGLES, 0, 3 * obj.num); 
+    glDrawArrays(GL_TRIANGLES, 0, 3 * window.model.num); 
 }
+
+int setMat4(GLuint program, const char *name, const mat4 &mat) {
+    glUniformMatrix4fv(glGetUniformLocation(program, name), 1, GL_FALSE, &mat[0][0]);
+    return SUCCESS;
+}
+
+int InitScene(window_t &window) {
+    float bmin[3], bmax[3];
+    window.program = glCreateProgram();
+    LoadShader(vs_src, fs_src, window.program);
+    loadObj(window.model, "./cube.obj", bmin, bmax);
+
+    return SUCCESS; 
+}
+

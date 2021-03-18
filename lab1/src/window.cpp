@@ -1,6 +1,5 @@
-#include "window.hpp"
+#include "render.hpp"
 #include "GLFW/glfw3.h"
-#include "RenderLog.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -15,43 +14,36 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-GLFWwindow *startWindowContext(const int width, const int height) {
+int startWindowContext(const int width, const int height, window_t &window) {
+
     if (!glfwInit()) {
-        RenderError("couldn't init GLFW context");
-        return NULL;
+        return -1;
     }
 
-    RenderProceed("Successfully inited GLFW context");
+    window.window = glfwCreateWindow(width, height, "oop", NULL, NULL);
 
-    return NULL;
-
-    GLFWwindow *window = glfwCreateWindow(width, height, "oop", NULL, NULL);
-
-    if (!window) {
-        RenderError("couldn't create GLFW window");
+    if (!window.window) {
         glfwTerminate();
-        return NULL;
+        return -1;
     }
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(window.window);
 
-    return window;
+    return SUCCESS;
 }
 
 int runGLEW() {
-    if (glfwInit() != GLEW_OK) {
-        RenderError("couldn't create GLEW context");
+    if (glewInit() != GLEW_OK) {
         return WINDOW_GLEW_ERROR;
     }
-    RenderProceed("GLEW was initialized");
 
-    return WINDOW_SUCCESS;
+    return SUCCESS;
 }
 
-int initimgui(window_t &window) {
+int initImGui(window_t &window) {
 
 #ifdef __APPLE__
-    const char *glsl_version = "#version 150";
+    const char *glsl_version = "#version 110";
     glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -74,8 +66,7 @@ int initimgui(window_t &window) {
 
     io.Fonts->AddFontDefault();
 
-    return WINDOW_SUCCESS;
-
+    return SUCCESS;
 }
 
 void runLoop(window_t &window) {
@@ -92,6 +83,7 @@ void runLoop(window_t &window) {
         glClearColor(0.3f, 0.5f, 0.6f, 1.f);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        window.draw(window);
 
         glfwSwapBuffers(window.window);
 
@@ -99,7 +91,6 @@ void runLoop(window_t &window) {
     }
     
 }
-
 
 void setCallbacks(window_t &window) {
     glfwSetErrorCallback(error_callback);

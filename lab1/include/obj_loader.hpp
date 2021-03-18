@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <cstring>
-#include <iostream>
+#include <stdio.h>
 #include <fstream>
 #include <sys/mman.h>
 #include <limits.h>
@@ -475,8 +475,6 @@ static int is_line_ending(const char *p, size_t i, size_t end_i) {
   return 0;
 }
 
-
-
 typedef struct {
     size_t pos;
     size_t len;
@@ -676,6 +674,7 @@ static int parseLine(Command &command, const char *p, size_t p_len,
 inline int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
                              size_t &num_shapes, const char *file_name, file_reader_callback file_reader,
                              void *ctx, unsigned int flags) {
+
     LineInfo *line_infos = NULL;
     Command *commands = NULL;
     size_t num_lines = 0;
@@ -700,6 +699,8 @@ inline int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
     if (get_line_infos(buf, len, &line_infos, &num_lines) != 0) {
         return OBJ_ERROR_EMPTY;
     }
+
+    printf("%zd\n", num_lines);
 
     commands = (Command *)OBJ_MALLOC(sizeof(Command) * num_lines);
 
@@ -881,6 +882,7 @@ inline int obj_parse_obj(obj_attrib_t &attrib, obj_shape_t **shapes,
         }
 
         (num_shapes) = shape_idx;
+        printf(num_shapes);
     }
 
     if (commands) {

@@ -5,7 +5,7 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include "imfilebrowser.h"
-#include "window.hpp"
+#include "render.hpp"
 #include <iostream>
 #include <string>
 
@@ -22,10 +22,31 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 int main(int argc, char *argv[])
 {
     window_t MainWindow;
-    MainWindow.window = startWindowContext(800, 600);
- 
 
-    glDisableVertexAttribArray(0);
+    if (startWindowContext(800, 600, MainWindow))
+    {
+        printf("Couldn't init GLFW\n");
+        return 1;
+    }
+
+    setCallbacks(MainWindow);
+
+    if (runGLEW()) {
+        printf("Couldn't init GLEW");
+        return 1;
+    }
+
+    if (initImGui(MainWindow)) {
+        printf("Couldn't init ImGUI");
+        return 1;
+    }
+
+    if (InitScene(MainWindow)) {
+        printf("Couldn't init scene");
+        return 1;
+    }
+
+    runLoop(MainWindow);
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

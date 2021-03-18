@@ -7,10 +7,10 @@
 
 /* Diordiev Mathematica */
 
-typedef double vec2[2];
-typedef double vec3[3];
+typedef float vec2[2];
+typedef float vec3[3];
 typedef float vec3f[3];
-typedef double vec4[4];
+typedef float vec4[4];
 typedef vec4   mat4[4];
 
 
@@ -42,6 +42,11 @@ typedef struct camera {
     float near    { 0.5f };
     float far     { 100.f };
 } camera_t;
+
+typedef struct scene {
+    camera_t cam;
+    mat4 projection;
+} scene_t;
 
 void cameraGetPerspective(camera_t &cam, mat4 &perspective);
 

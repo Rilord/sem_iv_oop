@@ -9,110 +9,62 @@
 #define RENDER_LINLKING_ERR (0x06)
 
 #include "obj_loader.hpp"
+#include "window.hpp"
 #include "camera.hpp"
-#include "RenderLog.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+void build_rotmatrix(float m[4][4], const float q[4]);
 
 typedef struct {
     GLuint vb;
     int num;
 } DrawObject;
 
-typedef struct {
+
+typedef struct window{
+    GLFWwindow *window;
+    camera_t cam;
     DrawObject model;
-    void (*render) (DrawObject &obj, camera_t &cam, GLFWwindow &window);
+    void (*draw) (struct window &window);
+    GLuint program;
+} window_t;
 
-} Renderer;
+int startWindowContext(const int width, const int height, window_t &window);
 
-#ifdef __linux__
-static const char * vs_src[] = 
-{
-    "#version 330\n"
-    "layout (location = 0) in vec3 inPos;\n"
-    "layout (location = 1) in vec3 inCol;\n"
-    "out vec3 vertCol;\n"
-    "uniform mat4 u_projectionMat44;\n"
-    "uniform mat4 u_viewMat44;\n"
-    "uniform mat4 u_modelMat44;\n"
-    "void main()\n"
-    "{\n"
-    "    vertCol       = inCol;\n"
-    "    vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );\n"
-    "    vec4 viewPos  = u_viewMat44 * modelPos;\n"
-    "    gl_Position   = u_projectionMat44 * viewPos;\n"
-    "}\n"
-};
+int runGLEW();
 
-static const char * fs_src[] = 
-{
-    "#version 400\n"
-    "in vec3 vertCol;\n"
-    "\n"
-    "out vec4 fragColor;\n"
-    "\n"
-    "void main()\n"
-    "{\n"
-    "    fragColor = vec4( vertCol, 1.0 );\n"
-    "}\n"
-};
+int initImGui(window_t &window);
 
-#endif /* linux */
+void runLoop(window_t &window);
 
-#ifdef __APPLE__
-static const char * vs_src[] = 
-{
-    "#version 150\n"
-    "layout (location = 0) in vec3 inPos;\n"
-    "layout (location = 1) in vec3 inCol;\n"
-    "out vec3 vertCol;\n"
-    "uniform mat4 u_projectionMat44;\n"
-    "uniform mat4 u_viewMat44;\n"
-    "uniform mat4 u_modelMat44;\n"
-    "void main()\n"
-    "{\n"
-    "    vertCol       = inCol;\n"
-    "    vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );\n"
-    "    vec4 viewPos  = u_viewMat44 * modelPos;\n"
-    "    gl_Position   = u_projectionMat44 * viewPos;\n"
-    "}\n"
-};
+void setCallbacks(window_t &window);
 
 
-static const char * fs_src[] = 
-{
-    "#version 150\n"
-    "in vec3 vertCol;\n"
-    "\n"
-    "out vec4 fragColor;\n"
-    "\n"
-    "void main()\n"
-    "{\n"
-    "    fragColor = vec4( vertCol, 1.0 );\n"
-    "}\n"
-};
 
-#endif /* APPLE */
+
 
 
 const char *readFile(const char *filePath);
 
-int LoadShader(const char *vertex_path, const char *fragment_path, GLuint program);
+int LoadShader(const char *vs, const char *fs, GLuint program);
 
 int loadObj(const char *filePath);
 
 
 void setupModel(DrawObject &obj);
 
-void draw(DrawObject &obj, camera_t &cam, GLFWwindow &window);
+void draw(DrawObject &obj, camera_t &cam, window_t &window);
 
-int setMat4(const std::string &name, const mat4 &mat);
+int setMat4(GLuint program, const char *name, const mat4 &mat);
 
 void getFileData(void *ctx, const char *filename,
         const char *obj_filename, char **data, size_t *len);
 
 int parse_obj_raw(obj_attrib_t &attrib, obj_shape_t **shapes, size_t &num_shapes, const char *filename);
+
+int InitScene(window_t &window);
+
 
 #endif /* RENDER_H_ */
