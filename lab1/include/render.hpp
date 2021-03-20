@@ -66,5 +66,7 @@ int parse_obj_raw(obj_attrib_t &attrib, obj_shape_t **shapes, size_t &num_shapes
 
 int InitScene(window_t &window);
 
+void CheckErrors(const char* desc);
+
 
 #endif /* RENDER_H_ */

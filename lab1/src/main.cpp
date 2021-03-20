@@ -46,7 +46,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    printf("%d - triangles\n", MainWindow.model.num);
+
     runLoop(MainWindow);
+
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
