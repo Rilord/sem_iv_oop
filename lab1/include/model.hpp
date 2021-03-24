@@ -2,11 +2,33 @@
 #define MODEL_H_
 
 #include "GL/glew.h"
+#include "vectors.hpp"
+#include "errors.hpp"
 
 typedef struct model_struct {
-    float *VAO;
-    int num;
-    GLuint vbo;
+    vec3 *vertices;
+    int vert_num;
+    int *indices;
+    int indices_num;
 } model_t;
+
+typedef struct {
+    GLuint vbo;
+    GLuint elementBuffer;
+    GLuint attrib_v_coord;
+    GLuint projection_matrix;
+    GLuint view_matrix;
+    GLuint model_matrix;
+    int num;
+} DrawObject;
+
+void setVertex(model_t &model, vec3 buf);
+
+void setFace(model_t &model, vec3i face);
+
+err_t loadVertexBuffer(DrawObject &obj, 
+        model_t &model, GLuint programID);
+
+err_t DestroyData(model_t &model);
 
 #endif /* MODEL_H_*/

@@ -6,10 +6,44 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "errors.hpp"
+#include "camera.hpp"
+#include "io.hpp"
+#include "model_loader.hpp"
 
-#define WINDOW_SUCCESS (0x10)
-#define WINDOW_GLFW_ERROR (0x11)
-#define WINDOW_GLEW_ERROR (0x12)
+typedef struct {
+    GLFWwindow *window;
+    camera_t cam;
+    mouse_state_t mouse;
+    GLuint program;
+    int width;
+    int height;
+} window_t;
 
+
+err_t startWindowContext(window_t &windowconst, int width, 
+        const int height);
+
+err_t runGLEW();
+
+err_t initImGui(window_t &window);
+
+void mouseMotionHandle(GLFWwindow *window, double mouseX, double mouseY);
+
+void clickFunc(GLFWwindow *window, int button, int action, int mods);
+
+void windowGetDimensions(window_t &window, int &width, int &height);
+
+void setCallbacks(window_t &window);
+
+err_t InitScene(window_t &window);
+
+err_t runLoop(window_t &window, DrawObject &obj);
+
+void GLFWDestroy(window_t &window);
+
+
+err_t destroyDrawObject(window_t &window,
+        DrawObject &obj);
 
 #endif /* WINDOW_H_ */

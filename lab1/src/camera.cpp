@@ -2,28 +2,6 @@
 
 #include <math.h>
 
-double dotProduct3(const vec3 &a, const vec3 &b) {
-
-    return a[0] * b[0] + a[1] * b[1]  + a[2] * b[2];
-}
-
-void crossProduct3(const vec3 &a, const vec3 &b, vec3 &result) {
-
-    result[0] = a[1] * b[2] - a[2] * b[1];
-    result[1] = a[2] * b[0] - a[0] * b[2];
-    result[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-void normalize3(vec3 &v) {
-    double len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    v[0] /= len; v[1] /= len; v[2] /= len;
-}
-
-
-void normalize4(vec4 &v) {
-    double len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
-    v[0] /= len; v[1] /= len; v[2] /= len; v[3] /= len;
-}
 
 double rad(double angle) {
     return angle * PI / 180.f;
@@ -95,3 +73,10 @@ void cameraGetPerspective(camera_t &cam, mat4 &perspective) {
     perspective[0][3] = 0.f;
 }
 
+void modelMatrix(mat4 &mat) {
+
+    mat[0][0] = 1;
+    mat[1][1] = 1;
+    mat[2][2] = 1;
+    mat[3][3] = 1;
+}

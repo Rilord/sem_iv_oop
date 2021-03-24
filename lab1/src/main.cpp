@@ -1,61 +1,88 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+#include "errors.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include "imfilebrowser.h"
-#include "render.hpp"
+#include "model.hpp"
+#include "window.hpp"
+#include "model_loader.hpp"
+#include "shaders.hpp"
 #include <iostream>
 #include <string>
 
-static void error_callback(int error, const char* description)
-{
-    fputs(description, stderr);
-}
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
 
 int main(int argc, char *argv[])
 {
     window_t MainWindow;
+    model_t model;
+    DrawObject obj;
+    auto err = SUCCESS;
 
-    if (startWindowContext(800, 600, MainWindow))
+    if (argv[1] == NULL) {
+        fprintf(stderr, "Wrong File!");
+        return 1;
+    }
+
+    string filename = { argv[1], 
+        strlen(argv[1])};
+
+    if ((err = startWindowContext(MainWindow, 800, 600)) != SUCCESS)
     {
-        printf("Couldn't init GLFW\n");
+        ErrorHandler(err);
         return 1;
     }
 
     setCallbacks(MainWindow);
 
-    if (runGLEW()) {
-        printf("Couldn't init GLEW");
+    if ((err = runGLEW()) != SUCCESS) {
+        ErrorHandler(err);
         return 1;
     }
 
-    if (initImGui(MainWindow)) {
-        printf("Couldn't init ImGUI");
+    if ((err = parseVertexFile(model, filename)) != SUCCESS) {
+        ErrorHandler(err);
         return 1;
     }
 
-    if (InitScene(MainWindow)) {
-        printf("Couldn't init scene");
+    if ((err = initImGui(MainWindow)) != SUCCESS) {
+        ErrorHandler(err);
+        DestroyData(model);
         return 1;
     }
 
-    printf("%d - triangles\n", MainWindow.model.num);
+    if ((err = InitScene(MainWindow)) != SUCCESS) {
+        ErrorHandler(err);
+        DestroyData(model);
+        return 1;
+    }
 
-    runLoop(MainWindow);
+    if ((err = LoadShader(MainWindow.program)) != SUCCESS) {
+        ErrorHandler(err);
+        destroyDrawObject(MainWindow, obj);
+        DestroyData(model);
+        return 1;
+    }
 
+    if ((err = loadVertexBuffer(obj, model, MainWindow.program)) != SUCCESS) {
+        destroyDrawObject(MainWindow, obj);
+        DestroyData(model);
+        ErrorHandler(err);
+        return 1;
+        
+    }
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    DestroyData(model);
 
-    glfwDestroyWindow(MainWindow.window);
-    glfwTerminate();
+    if (runLoop(MainWindow, obj)) {
+        destroyDrawObject(MainWindow, obj);
+        DestroyData(model);
+        ErrorHandler(err);
+    }
+
+    destroyDrawObject(MainWindow, obj);
+
     return 0;
 }

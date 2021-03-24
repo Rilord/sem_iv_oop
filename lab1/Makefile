@@ -58,19 +58,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /usr/local/Cellar/cmake/3.19.0_1/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /usr/local/Cellar/cmake/3.19.0_1/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kodor/proj/oop/lab1
+CMAKE_SOURCE_DIR = /Users/kodor/proj/oop/lab1
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kodor/proj/oop/lab1
+CMAKE_BINARY_DIR = /Users/kodor/proj/oop/lab1
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -78,26 +78,60 @@ CMAKE_BINARY_DIR = /home/kodor/proj/oop/lab1
 # Special rule for the target install/local
 install/local: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local
 
 # Special rule for the target install/local
 install/local/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
 
 # Special rule for the target install
 install: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
-	/usr/bin/cmake -P cmake_install.cmake
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -P cmake_install.cmake
 .PHONY : install
 
 # Special rule for the target install
 install/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
-	/usr/bin/cmake -P cmake_install.cmake
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/local/Cellar/cmake/3.19.0_1/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/local/Cellar/cmake/3.19.0_1/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # Special rule for the target list_install_components
 list_install_components:
@@ -109,45 +143,11 @@ list_install_components/fast: list_install_components
 
 .PHONY : list_install_components/fast
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
-# Special rule for the target install/strip
-install/strip: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip
-
-# Special rule for the target install/strip
-install/strip/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip/fast
-
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kodor/proj/oop/lab1/CMakeFiles /home/kodor/proj/oop/lab1//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/kodor/proj/oop/lab1/CMakeFiles /Users/kodor/proj/oop/lab1//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kodor/proj/oop/lab1/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/kodor/proj/oop/lab1/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -189,19 +189,6 @@ implot/fast:
 .PHONY : implot/fast
 
 #=============================================================================
-# Target rules for targets named imgui
-
-# Build rule for target.
-imgui: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 imgui
-.PHONY : imgui
-
-# fast build rule for target.
-imgui/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/imgui.dir/build.make CMakeFiles/imgui.dir/build
-.PHONY : imgui/fast
-
-#=============================================================================
 # Target rules for targets named lab1
 
 # Build rule for target.
@@ -213,6 +200,19 @@ lab1: cmake_check_build_system
 lab1/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/build
 .PHONY : lab1/fast
+
+#=============================================================================
+# Target rules for targets named imgui
+
+# Build rule for target.
+imgui: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 imgui
+.PHONY : imgui
+
+# fast build rule for target.
+imgui/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/imgui.dir/build.make CMakeFiles/imgui.dir/build
+.PHONY : imgui/fast
 
 #=============================================================================
 # Target rules for targets named uninstall
@@ -471,6 +471,60 @@ src/camera.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/camera.cpp.s
 .PHONY : src/camera.cpp.s
 
+src/errors.o: src/errors.cpp.o
+
+.PHONY : src/errors.o
+
+# target to build an object file
+src/errors.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/errors.cpp.o
+.PHONY : src/errors.cpp.o
+
+src/errors.i: src/errors.cpp.i
+
+.PHONY : src/errors.i
+
+# target to preprocess a source file
+src/errors.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/errors.cpp.i
+.PHONY : src/errors.cpp.i
+
+src/errors.s: src/errors.cpp.s
+
+.PHONY : src/errors.s
+
+# target to generate assembly for a file
+src/errors.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/errors.cpp.s
+.PHONY : src/errors.cpp.s
+
+src/io.o: src/io.cpp.o
+
+.PHONY : src/io.o
+
+# target to build an object file
+src/io.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/io.cpp.o
+.PHONY : src/io.cpp.o
+
+src/io.i: src/io.cpp.i
+
+.PHONY : src/io.i
+
+# target to preprocess a source file
+src/io.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/io.cpp.i
+.PHONY : src/io.cpp.i
+
+src/io.s: src/io.cpp.s
+
+.PHONY : src/io.s
+
+# target to generate assembly for a file
+src/io.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/io.cpp.s
+.PHONY : src/io.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -498,32 +552,59 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/parse_func.o: src/parse_func.cpp.o
+src/model.o: src/model.cpp.o
 
-.PHONY : src/parse_func.o
+.PHONY : src/model.o
 
 # target to build an object file
-src/parse_func.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/parse_func.cpp.o
-.PHONY : src/parse_func.cpp.o
+src/model.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model.cpp.o
+.PHONY : src/model.cpp.o
 
-src/parse_func.i: src/parse_func.cpp.i
+src/model.i: src/model.cpp.i
 
-.PHONY : src/parse_func.i
+.PHONY : src/model.i
 
 # target to preprocess a source file
-src/parse_func.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/parse_func.cpp.i
-.PHONY : src/parse_func.cpp.i
+src/model.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model.cpp.i
+.PHONY : src/model.cpp.i
 
-src/parse_func.s: src/parse_func.cpp.s
+src/model.s: src/model.cpp.s
 
-.PHONY : src/parse_func.s
+.PHONY : src/model.s
 
 # target to generate assembly for a file
-src/parse_func.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/parse_func.cpp.s
-.PHONY : src/parse_func.cpp.s
+src/model.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model.cpp.s
+.PHONY : src/model.cpp.s
+
+src/model_loader.o: src/model_loader.cpp.o
+
+.PHONY : src/model_loader.o
+
+# target to build an object file
+src/model_loader.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model_loader.cpp.o
+.PHONY : src/model_loader.cpp.o
+
+src/model_loader.i: src/model_loader.cpp.i
+
+.PHONY : src/model_loader.i
+
+# target to preprocess a source file
+src/model_loader.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model_loader.cpp.i
+.PHONY : src/model_loader.cpp.i
+
+src/model_loader.s: src/model_loader.cpp.s
+
+.PHONY : src/model_loader.s
+
+# target to generate assembly for a file
+src/model_loader.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/model_loader.cpp.s
+.PHONY : src/model_loader.cpp.s
 
 src/render.o: src/render.cpp.o
 
@@ -551,6 +632,60 @@ src/render.s: src/render.cpp.s
 src/render.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/render.cpp.s
 .PHONY : src/render.cpp.s
+
+src/shaders.o: src/shaders.cpp.o
+
+.PHONY : src/shaders.o
+
+# target to build an object file
+src/shaders.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/shaders.cpp.o
+.PHONY : src/shaders.cpp.o
+
+src/shaders.i: src/shaders.cpp.i
+
+.PHONY : src/shaders.i
+
+# target to preprocess a source file
+src/shaders.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/shaders.cpp.i
+.PHONY : src/shaders.cpp.i
+
+src/shaders.s: src/shaders.cpp.s
+
+.PHONY : src/shaders.s
+
+# target to generate assembly for a file
+src/shaders.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/shaders.cpp.s
+.PHONY : src/shaders.cpp.s
+
+src/vectors.o: src/vectors.cpp.o
+
+.PHONY : src/vectors.o
+
+# target to build an object file
+src/vectors.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/vectors.cpp.o
+.PHONY : src/vectors.cpp.o
+
+src/vectors.i: src/vectors.cpp.i
+
+.PHONY : src/vectors.i
+
+# target to preprocess a source file
+src/vectors.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/vectors.cpp.i
+.PHONY : src/vectors.cpp.i
+
+src/vectors.s: src/vectors.cpp.s
+
+.PHONY : src/vectors.s
+
+# target to generate assembly for a file
+src/vectors.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab1.dir/build.make CMakeFiles/lab1.dir/src/vectors.cpp.s
+.PHONY : src/vectors.cpp.s
 
 src/window.o: src/window.cpp.o
 
@@ -620,15 +755,30 @@ help:
 	@echo "... src/camera.o"
 	@echo "... src/camera.i"
 	@echo "... src/camera.s"
+	@echo "... src/errors.o"
+	@echo "... src/errors.i"
+	@echo "... src/errors.s"
+	@echo "... src/io.o"
+	@echo "... src/io.i"
+	@echo "... src/io.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/parse_func.o"
-	@echo "... src/parse_func.i"
-	@echo "... src/parse_func.s"
+	@echo "... src/model.o"
+	@echo "... src/model.i"
+	@echo "... src/model.s"
+	@echo "... src/model_loader.o"
+	@echo "... src/model_loader.i"
+	@echo "... src/model_loader.s"
 	@echo "... src/render.o"
 	@echo "... src/render.i"
 	@echo "... src/render.s"
+	@echo "... src/shaders.o"
+	@echo "... src/shaders.i"
+	@echo "... src/shaders.s"
+	@echo "... src/vectors.o"
+	@echo "... src/vectors.i"
+	@echo "... src/vectors.s"
 	@echo "... src/window.o"
 	@echo "... src/window.i"
 	@echo "... src/window.s"

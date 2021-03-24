@@ -2,69 +2,107 @@
 #include "errors.hpp"
 
 
-static err_t parseLine(parsing_buffer &buf, string &p) {
-    char linebuf[128]; 
+static err_t parseLine(model_t &model, string &p) {
+    char str[32], type;
+    vec3 VertexBuf;
+    vec3i IndexBuf;
 
     auto error = SUCCESS;
 
-    assert(p.len < 127);
+    string linebuf { str, 32 };
 
-    memcpy(linebuf, p.str, p.len);
+    memcpy(linebuf.str, p.str, p.len);
 
-    if (parseFloat3(buf.v, linebuf)) {
-        error = DATA_ERR;
+    type = linebuf.str[0];
+
+    switch(type) {
+        case 'v':
+            if (parseFloat3(VertexBuf, linebuf)) {
+                error = DATA_ERR;
+                }
+            setVertex(model, VertexBuf);
+            break;
+        case 'f':
+            if (parseInt3(IndexBuf, linebuf)) {
+                error = DATA_ERR;
+            }
+            setFace(model, IndexBuf);
+            break;
+        default:
+            error = DATA_ERR;  
+            break;
     }
-
-    return SUCCESS;
+    
+    return error;
 }
 
-
 static err_t parseFloat3(vec3 &vertex, string &str) {
-    if (sscanf(str.str, "%f %f %f", &vertex[0], &vertex[1], &vertex[2]) != 3) {
+    if (sscanf(str.str + VALUES_OFFSET, "%f %f %f\n", &vertex[0], &vertex[1], &vertex[2]) != 3) {
         return DATA_ERR;       
     }
     return SUCCESS;
 }
 
-err_t parseVertexFile(model_file &model_data, model_t &model) {
+static err_t parseInt3(vec3i &vertex, string &str) {
+    if (sscanf(str.str + VALUES_OFFSET, "%d %d %d\n", &vertex[0], &vertex[1], &vertex[2]) != 3) {
+        return DATA_ERR;       
+    }
+    return SUCCESS;
+}
+
+err_t parseVertexFile(model_t &model, string &file) {
 
     FILE *f;
     ssize_t read;
-    size_t len = 128;
+    size_t len = 32;
     size_t vertices_num = 0;
+    err_t error = SUCCESS;
 
-    parsing_buffer buf;
+    vec3 buf;
     string line;
 
-    f = fopen(model_data.filename, "r");
+    f = fopen(file.str, "r");
 
     if (f == NULL) 
         return WRONG_FILE;
 
-    vertices_num = getVerticesNum(f);
+    prepareData(model, f);
 
-
+    while (getline(&line.str, &line.len, f)) {
+        error = parseLine(model, line);
+        if (error != SUCCESS)
+            break;
     }
 
-    return SUCCESS;
+    fclose(f);
+
+    return error;
 }
 
-static size_t getVerticesNum(FILE *f) {
-
-    size_t count_lines = 0;
+static err_t prepareData(model_t &model, FILE *f) {
+    err_t error = SUCCESS;
+    unsigned int v_count = 0;
+    unsigned int f_count = 0;
     char chr = getc(f);
 
     while (chr != EOF) {
-        if (chr == '\n') {
-            count_lines++;
-        }
+        if (chr == 'v')
+            v_count++;
+        if (chr == 'f')
+            f_count++;
         chr = getc(f);
     }
 
+    if (!v_count || !f_count)
+        return DATA_ERR;
+
+    model.vertices = new vec3[v_count];
+    model.vert_num = v_count;
+    model.indices = new int[f_count * 3];
+    model.indices_num = f_count;
+
     fseek(f, 0, SEEK_SET);
 
-    return count_lines;
+    return error;
 }
-
-
 
