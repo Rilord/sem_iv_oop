@@ -9,7 +9,7 @@
 
 void CheckErrors(const char* desc);
 
-err_t LoadShader(GLuint program);
+int LoadShader(GLuint program);
 
 void setMat4(GLuint program, const char *name, const mat4 &mat);
 

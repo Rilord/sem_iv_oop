@@ -1,5 +1,6 @@
 #include "model.hpp"
 #include "errors.hpp"
+#include "manager.hpp"
 
 void setVertex(model_t &model, vec3 buf) {
     model.vertices[model.vert_num][0] = buf[0];
@@ -13,8 +14,8 @@ void setFace(model_t &model, vec3i face) {
     model.indices[model.indices_num++] = face[2];
 }
 
-err_t loadVertexBuffer(DrawObject &obj, model_t &model, GLuint programID) {
-    err_t error = SUCCESS;
+int loadVertexBuffer(DrawObject &obj, model_t &model, GLuint programID) {
+    int error = SUCCESS;
 
     glGenBuffers(1, &obj.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, obj.vbo);
@@ -54,7 +55,7 @@ err_t loadVertexBuffer(DrawObject &obj, model_t &model, GLuint programID) {
     return error;
 }
 
-err_t DestroyData(model_t &model) {
+int DestroyData(model_t &model) {
     auto error = SUCCESS; 
 
     delete [] model.vertices;
@@ -62,3 +63,4 @@ err_t DestroyData(model_t &model) {
 
     return error;
 }
+

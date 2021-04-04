@@ -8,12 +8,6 @@
 #define SQRT_2 (1.41421356237309504880)
 #define RENORMCOUNT 97
 
-err_t userMouseEvent(camera_t &cam) {
-    err_t error = SUCCESS;
-
-    return error;
-}
-
 static float projectToSphere(float , float, float);
 
 

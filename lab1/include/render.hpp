@@ -5,6 +5,11 @@
 #include "camera.hpp"
 #include "shaders.hpp"
 
+typedef struct {
+    DrawObject obj;
+    void (*render) (DrawObject &, camera_t &, GLuint program);
+} renderer;
+
 void drawObject(DrawObject &obj);
 
 void setMat4(GLuint uniformLocation, const mat4 &mat);

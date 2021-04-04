@@ -1,9 +1,13 @@
 #include "window.hpp"
 #include "GLFW/glfw3.h"
 #include "camera.hpp"
+#include "imgui.h"
+#include "manager.hpp"
 #include "model.hpp"
 #include "render.hpp"
 #include "io.hpp"
+#include "imfilebrowser.h"
+#include <string.h>
 
 static void error_callback(int error, const char* description)
 {
@@ -23,25 +27,35 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             }
                 break;
         case GLFW_KEY_K:
-             win->cam.pos[0] += 1;
+            win->event.cmd = MOVE;
+            win->event.data.x = 1;
+            win->event.data.y = 0;
+            win->event.data.z = 0;
             break;
         case GLFW_KEY_J:
-             win->cam.pos[0] -= 1;
+            win->event.cmd = MOVE;
+            win->event.data.x = -1;
+            win->event.data.y = 0;
+            win->event.data.z = 0;
             break;
         case GLFW_KEY_L:
-             win->cam.pos[1] += 1;
+            win->event.cmd = MOVE;
+            win->event.data.x = 0;
+            win->event.data.y = 1;
+            win->event.data.z = 0;
             break;
         case GLFW_KEY_H:
-             win->cam.pos[1] -= 1;
+            win->event.cmd = MOVE;
+            win->event.data.x = 0;
+            win->event.data.y = -1;
+            win->event.data.z = 0;
             break;
         default:
             break;
     }
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-err_t startWindowContext(window_t &window, const int width, const int height) {
+int startWindowContext(window_t &window, const int width, const int height) {
 
     if (!glfwInit()) {
         return WINDOW_ERR;
@@ -61,7 +75,7 @@ err_t startWindowContext(window_t &window, const int width, const int height) {
     return SUCCESS;
 }
 
-err_t runGLEW() {
+int runGLEW() {
     if (glewInit() != GLEW_OK) {
         return WINDOW_ERR;
     }
@@ -69,7 +83,7 @@ err_t runGLEW() {
     return SUCCESS;
 }
 
-err_t initImGui(window_t &window) {
+int initImGui(window_t &window) {
 
 #ifdef __APPLE__
     const char *glsl_version = "#version 110";
@@ -98,24 +112,84 @@ err_t initImGui(window_t &window) {
     return SUCCESS;
 }
 
-err_t runLoop(window_t &window, DrawObject &obj) {
-    auto error = SUCCESS;
+void runLoop(window_t &window, renderer &r) {
+    auto rc = 0;
+    std::string selectedFile;
     while (!glfwWindowShouldClose(window.window)) {
 
         glfwPollEvents();
 
-        glClearColor(0.3f, 0.5f, 0.6f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_DEPTH_TEST);
 
-        drawObject(obj);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+
+        if (ImGui::Button("Open")) {
+            window.event.cmd = LOAD;
+        }
+
+        if (ImGui::Button("Save")) {
+            
+        }
+
+        if (ImGui::Button("Exit")) {
+            
+        }
+
+
+        ImGui::NewFrame();
+
+        ImGui::Begin("Lab");
+        
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Open..", "Ctrl+O"))
+                {
+                    window.fileDialog.Open();
+
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
+        ImGui::End();
+
+        window.fileDialog.Display();
+
+        if(window.fileDialog.HasSelected())
+        {
+            selectedFile = window.fileDialog.GetSelected();
+            window.fileDialog.ClearSelected();
+        }
+        ImGui::Render();
+
+
+        glClearColor(0.3f, 0.5f, 0.6f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
+        glfwPollEvents();
+
+        if (window.event.cmd != STILL)
+            int rc = taskScheduler(window.cam, r.obj, window.event);
+
+        if (rc) {
+            ErrorHandler(rc);
+        }
+
+        r.render(r.obj, window.cam, window.program);
 
         glfwSwapBuffers(window.window);
 
     }
 
-    return error; 
 }
 
 void setCallbacks(window_t &window) {
@@ -154,55 +228,11 @@ void clickFunc(GLFWwindow *window, int button, int action, int mod) {
 }
 
 void mouseMotionHandle(GLFWwindow *window, double mouseX, double mouseY) {
-    float rotScale = 1.0f;
-    float transScale = 2.0f;
     int width, height;
 
     window_t *win = (window_t *) glfwGetWindowUserPointer(window);
 
     windowGetDimensions(*win, width, height);
-
-    
-
-    if (win->mouse.mouseLeftPressed) {
-        trackBall(win->cam.previousQuat, 
-                vec2 { 
-                rotScale * (2.0f * win->mouse.mouseX - width) / (float) width, 
-                rotScale * (height - 2.0f * win->mouse.mouseY) / (float) height },
-                vec2 { 
-                rotScale * (2.0f * (float) mouseX - width) / (float) width, 
-                rotScale * (height - 2.0f * (float) mouseY / (float) height) 
-                }
-                );
-
-        addQuats(win->cam.previousQuat, 
-                win->cam.currentQuat, 
-                win->cam.currentQuat);
-        
-    } else if (win->mouse.mouseMiddlePressed) {
-             win->cam.point[0] -= transScale * 
-                 ((float)mouseX - win->mouse.mouseX) / (float) width;
-
-            win->cam.point[0] -= transScale * 
-                ((float) mouseX - win->mouse.mouseX) / (float)width;
-
-            win->cam.pos[1] += transScale * 
-                ((float) mouseY - win->mouse.mouseY) / (float)height;
-
-            win->cam.point[1] += transScale * 
-                ((float) mouseY - win->mouse.mouseY) / (float)height;
-
-    } else if (win->mouse.mouseRightPressed) {
-            win->cam.pos[2] += transScale * 
-              ((float) mouseY - win->mouse.mouseY) / (float)height;
-
-            win->cam.point[2] += transScale * 
-                ((float) mouseY - win->mouse.mouseY) / (float)height; 
-    }
-
-    win->mouse.mouseX = (float) mouseX;
-    win->mouse.mouseY = (float) mouseY;
-
     
 }
 
@@ -212,7 +242,7 @@ void windowGetDimensions(window_t &window, int &width, int &height) {
 
 }
 
-err_t destroyDrawObject(window_t &window, 
+int destroyDrawObject(window_t &window, 
         DrawObject &obj) {
     auto error = SUCCESS;
 
@@ -225,30 +255,7 @@ err_t destroyDrawObject(window_t &window,
     return error;
 }
 
-void update(window_t &window, DrawObject &obj) {
-    mat4 projection, view, rotation;
-    cameraGetPerspective(window.cam, projection);
-    cameraLookAt(window.cam, view);
-
-    glUniformMatrix4fv(obj.projection_matrix, 1, GL_FALSE, 
-        &projection[0][0]); 
-
-    glUniformMatrix4fv(obj.view_matrix, 1, GL_FALSE, 
-        &view[0][0]); 
-
-    buildRotMatrix(rotation, window.cam.currentQuat);
-
-    glEnable(GL_DEPTH);
-
-    glUseProgram(window.program);
-
-    glBindVertexArray(obj.vbo);
-
-    glDrawElements(GL_TRIANGLES, obj.num, GL_UNSIGNED_INT, (void *) 0);
-
-}
-
-err_t InitScene(window_t &window) {
+int InitScene(window_t &window) {
     auto error = SUCCESS;
 
     window.program = glCreateProgram();
@@ -264,7 +271,4 @@ void GLFWDestroy(window_t &window) {
     glfwDestroyWindow(window.window);
     glfwTerminate();
     
-}
-
-err_t managerSchedeuleTask(const event_t &event, event_data_t &data) {
 }

@@ -26,9 +26,9 @@ void setVertex(model_t &model, vec3 buf);
 
 void setFace(model_t &model, vec3i face);
 
-err_t loadVertexBuffer(DrawObject &obj, 
+int loadVertexBuffer(DrawObject &obj, 
         model_t &model, GLuint programID);
 
-err_t DestroyData(model_t &model);
+int DestroyData(model_t &model);
 
 #endif /* MODEL_H_*/

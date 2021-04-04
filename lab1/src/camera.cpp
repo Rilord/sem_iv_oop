@@ -1,5 +1,7 @@
 #include "camera.hpp"
+#include "io.hpp"
 
+#include <cstdio>
 #include <math.h>
 
 
@@ -79,4 +81,19 @@ void modelMatrix(mat4 &mat) {
     mat[1][1] = 1;
     mat[2][2] = 1;
     mat[3][3] = 1;
+}
+
+void saveModelState(FILE *f, camera_t &cam) {
+    fprintf(f, "%f %f %f\n", cam.pos[0], cam.pos[1], cam.pos[2]);
+    fprintf(f, "%f %f %f\n", cam.point[0], cam.point[1], cam.point[2]);
+    fclose(f);
+    
+}
+
+void loadModelState(camera_t &cam, FILE *f) {
+    fscanf(f, "%f %f %f\n", &cam.pos[0], 
+            &cam.pos[1], &cam.pos[2]);
+    fscanf(f, "%f %f %f\n", &cam.point[0], 
+            &cam.point[1], &cam.point[2]);
+    fclose(f); 
 }

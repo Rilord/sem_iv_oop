@@ -2,6 +2,7 @@
 #define CAMERA_H_
 
 #include <string.h>
+#include <stdio.h>
 #include "vectors.hpp"
 
 #define CAMERA_OPERATION_ERR (0x02)
@@ -28,6 +29,8 @@ void cameraGetPerspective(camera_t &cam, mat4 &perspective);
 void cameraLookAt(camera_t &cam, mat4 &perspective);
 
 void modelMatrix(mat4 &mat);
+
+void saveModelState(FILE *f, camera_t &cam);
 
 
 #endif /* CAMERA_H_ */

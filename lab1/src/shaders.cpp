@@ -32,7 +32,7 @@ static const char *fs_src[] =
     "}\n"
 };
 
-err_t LoadShader(GLuint program) {
+int LoadShader(GLuint program) {
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 

@@ -1,6 +1,6 @@
 #include "errors.hpp"
 
-void ErrorHandler(const err_t &code) {
+void ErrorHandler(const int &code) {
     switch(code) {
         case WRONG_FILE: 
             fprintf(stderr, "Wrong File!");

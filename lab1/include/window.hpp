@@ -10,23 +10,27 @@
 #include "camera.hpp"
 #include "io.hpp"
 #include "model_loader.hpp"
+#include "events.hpp"
+#include "imfilebrowser.h"
 
 typedef struct {
     GLFWwindow *window;
     camera_t cam;
     mouse_state_t mouse;
     GLuint program;
+    event_t event;
     int width;
     int height;
+    ImGui::FileBrowser fileDialog;
 } window_t;
 
 
-err_t startWindowContext(window_t &windowconst, int width, 
+int startWindowContext(window_t &windowconst, int width, 
         const int height);
 
-err_t runGLEW();
+int runGLEW();
 
-err_t initImGui(window_t &window);
+int initImGui(window_t &window);
 
 void mouseMotionHandle(GLFWwindow *window, double mouseX, double mouseY);
 
@@ -36,14 +40,14 @@ void windowGetDimensions(window_t &window, int &width, int &height);
 
 void setCallbacks(window_t &window);
 
-err_t InitScene(window_t &window);
+int InitScene(window_t &window);
 
-err_t runLoop(window_t &window, DrawObject &obj);
+void runLoop(window_t &window, DrawObject &obj);
 
 void GLFWDestroy(window_t &window);
 
 
-err_t destroyDrawObject(window_t &window,
+int destroyDrawObject(window_t &window,
         DrawObject &obj);
 
 #endif /* WINDOW_H_ */

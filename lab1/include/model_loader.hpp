@@ -17,15 +17,17 @@ typedef struct string_struct {
     size_t len;
 } string;
 
-static err_t parseLine(model_t &model, string &p);
+static int parseLine(model_t &model, string &p);
 
-static err_t parseFloat3(vec3 &vertex, string &str);
+static int parseFloat3(vec3 &vertex, string &str);
 
-static err_t parseInt3(vec3i &vertex, string &str);
+static int parseInt3(vec3i &vertex, string &str);
 
-err_t parseVertexFile(model_t &model, string &file);
+int parseVertexFile(model_t &model, string &file);
 
-static err_t prepareData(model_t &model, FILE *f);
+static int prepareData(model_t &model, FILE *f);
+
+int loadModel(string &str);
 
 
 #endif /* MODEL_LOADER_H_ */

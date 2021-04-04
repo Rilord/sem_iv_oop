@@ -2,7 +2,7 @@
 #include "errors.hpp"
 
 
-static err_t parseLine(model_t &model, string &p) {
+static int parseLine(model_t &model, string &p) {
     char str[32], type;
     vec3 VertexBuf;
     vec3i IndexBuf;
@@ -36,27 +36,27 @@ static err_t parseLine(model_t &model, string &p) {
     return error;
 }
 
-static err_t parseFloat3(vec3 &vertex, string &str) {
+static int parseFloat3(vec3 &vertex, string &str) {
     if (sscanf(str.str + VALUES_OFFSET, "%f %f %f\n", &vertex[0], &vertex[1], &vertex[2]) != 3) {
         return DATA_ERR;       
     }
     return SUCCESS;
 }
 
-static err_t parseInt3(vec3i &vertex, string &str) {
+static int parseInt3(vec3i &vertex, string &str) {
     if (sscanf(str.str + VALUES_OFFSET, "%d %d %d\n", &vertex[0], &vertex[1], &vertex[2]) != 3) {
         return DATA_ERR;       
     }
     return SUCCESS;
 }
 
-err_t parseVertexFile(model_t &model, string &file) {
+int parseVertexFile(model_t &model, string &file) {
 
+    auto error = SUCCESS;
     FILE *f;
     ssize_t read;
     size_t len = 32;
     size_t vertices_num = 0;
-    err_t error = SUCCESS;
 
     vec3 buf;
     string line;
@@ -66,7 +66,9 @@ err_t parseVertexFile(model_t &model, string &file) {
     if (f == NULL) 
         return WRONG_FILE;
 
-    prepareData(model, f);
+    if ((error = prepareData(model, f)) != SUCCESS) {
+        return 
+    }
 
     while (getline(&line.str, &line.len, f)) {
         error = parseLine(model, line);
@@ -79,8 +81,8 @@ err_t parseVertexFile(model_t &model, string &file) {
     return error;
 }
 
-static err_t prepareData(model_t &model, FILE *f) {
-    err_t error = SUCCESS;
+static int prepareData(model_t &model, FILE *f) {
+    int error = SUCCESS;
     unsigned int v_count = 0;
     unsigned int f_count = 0;
     char chr = getc(f);
