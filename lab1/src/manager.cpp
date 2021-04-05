@@ -54,17 +54,19 @@ int taskScheduler(camera_t &cam, DrawObject &obj, event_t &event, mouse_state_t 
             mouse.mouseY = (float) event.data.y;
             break;
         case LOAD:
-            modelSaveState();
-            modelFree();
+            DestroyData(model_t &model)
             modelLoad();
             break;
         case SAVE:
-            modelSaveState();
+            saveModelState(cam);
             modelFree();
             break;
         case UNKNOWN:
             break;
         case STILL:
+            break;
+        case QUIT:
+            deleteBufferModel();
             break;
     }
 

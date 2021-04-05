@@ -67,7 +67,7 @@ int parseVertexFile(model_t &model, string &file) {
         return WRONG_FILE;
 
     if ((error = prepareData(model, f)) != SUCCESS) {
-        return 
+        return WRONG_FILE; 
     }
 
     while (getline(&line.str, &line.len, f)) {
@@ -107,4 +107,3 @@ static int prepareData(model_t &model, FILE *f) {
 
     return error;
 }
-

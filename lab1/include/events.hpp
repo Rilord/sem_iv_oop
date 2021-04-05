@@ -9,7 +9,8 @@ enum commands {
     LOAD,
     SAVE,
     UNKNOWN,
-    STILL
+    STILL,
+    QUIT
 };
 
 typedef struct {

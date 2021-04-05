@@ -64,3 +64,8 @@ int DestroyData(model_t &model) {
     return error;
 }
 
+int GLModelFree(DrawObject &obj) {
+    glDeleteBuffers(1, &obj.vbo);
+    return SUCCESS;
+};
+
