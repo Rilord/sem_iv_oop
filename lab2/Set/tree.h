@@ -6,16 +6,16 @@
 #include "compare.h"
 
 template<class T, class Compare = less<T>>
-class Tree {
+class tree {
 public:
-    typedef std::shared_ptr<TreeNode<T>> tree_node_ptr;
+    typedef std::shared_ptr<tree_node<T>> tree_node_ptr;
     typedef T valueType;
-    typedef TreeNode<T> nodeType;
-    typedef TreeIterator<nodeType> iterator;
+    typedef tree_node<T> nodeType;
+    typedef tree_iterator<nodeType> iterator;
 
-    Tree(Compare key_compare) : root(nullptr), size(0) {}
+    tree(Compare key_compare) : root(nullptr), size(0) {}
     template<class Iterator_>
-    Tree(Compare key_compare, Iterator_ begin, Iterator_ end) {
+    tree(Compare key_compare, Iterator_ begin, Iterator_ end) {
         insert(begin, end);
     }
 

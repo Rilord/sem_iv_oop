@@ -4,21 +4,26 @@
 #include <initializer_list>
 #include "tree.h"
 
-template <class T, class Compare=less<T>>
+template <class T>
 class Set {
 
 public:
-    typedef T valueType;
-    explicit Set(const Compare& Pred);
-    Set(std::initializer_list<T> items, const Compare & Pred);
-    ~Set();
+    using valueType = T;
+    using std::shared_ptr<set_node<T>> = ptr;
+    using tree = tree<valueType>;
+
+
+    explicit Set() = default;
+    Set(std::initializer_list<T> items);
+
+    ~Set() override = default;
 
     void insert(const valueType &value) {
         tree.insert(value);
     }
     void erase(const valueType &value);
     void clear() {
-        tree.clear();
+        impl.clear();
     }
 
     bool contains(const valueType &value) const;
@@ -27,8 +32,10 @@ public:
 
 
 private:
-    typedef Tree<valueType, Compare> rbTree;
-    rbTree tree;
+    tree impl;
+
+protected:
+    std::pair<set_iterator<T>, bool> insert(
 
 };
 

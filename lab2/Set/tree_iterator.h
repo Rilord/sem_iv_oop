@@ -9,90 +9,37 @@ using std::iterator;
 using std::bidirectional_iterator_tag;
 
 template<typename T>
-class TreeIterator: 
-    public iterator<bidirectional_iterator_tag, typename T::valueType>
+class tree_iterator: 
+    public iterator<bidirectional_iterator_tag, typename T::valuetype>
 {
+
+    virtual 
 public:
-    typedef std::shared_ptr<TreeNode<T>> tree_node_ptr;
-    typedef typename T::valueType &      reference;
-    explicit TreeIterator();
-    TreeIterator(const tree_node_ptr node);
-    virtual ~TreeIterator() = default;
+    using ptr =  std::shared_ptr<tree_node<T>>;
+    using reference = typename T::valuetype &;
+    explicit tree_iterator();
+    tree_iterator(const ptr node);
+    virtual ~tree_iterator() = default;
 
-    TreeIterator<T> &operator=(const TreeIterator<T> &listIter);
+    tree_iterator<T> &operator=(const tree_iterator<T> &listiter);
 
-    TreeIterator<T> &next();
-    TreeIterator<T> &prev();
-    TreeIterator<T> &operator++();
-    TreeIterator<T> operator++(int);
-    TreeIterator<T> &operator--();
-    TreeIterator<T> operator--(int);
+    tree_iterator<T> &next();
+    tree_iterator<T> &prev();
+    tree_iterator<T> &operator++();
+    tree_iterator<T> operator++(int);
+    tree_iterator<T> &operator--();
+    tree_iterator<T> operator--(int);
 
-    bool checkRange() const;
+    bool checkrange() const;
 
-    bool operator==(const TreeIterator<T> &listIter) const;
-    bool operator!=(const TreeIterator<T> &listIter) const;
-    tree_node_ptr operator->(void);
+    bool operator==(const tree_iterator<T> &listiter) const;
+    bool operator!=(const tree_iterator<T> &listiter) const;
+    ptr operator->(void);
     reference operator *(void);
-
+    friend class set;
 
 protected:
-    std::weak_ptr<TreeNode<T>> Iterator;
+    std::weak_ptr<tree_node<T>> iterator;
 
 };
-
-template<typename T>
-TreeIterator<T>::TreeIterator() : Iterator() {
-}
-
-template<typename T>
-TreeIterator<T>::TreeIterator(const tree_node_ptr node) : Iterator(node) {
-}
-
-template<typename T>
-TreeIterator<T> &TreeIterator<T>::next() {
-    if (this->currentPointer.expired())
-    {
-
-    }
-    this->Iterator = this->Iterator->Successor();
-    return (*this);
-}
-
-template<typename T>
-TreeIterator<T> &TreeIterator<T>::prev() {
-    if (this->currentPointer.expired())
-    {
-
-    }
-    this->Iterator = this->Iterator->Predcessor();
-    return (*this);
-}
-
-template<typename T>
-TreeIterator<T> &TreeIterator<T>::operator++() {
-    this->next();
-    return *this;
-}
-
-template<typename T>
-TreeIterator<T> TreeIterator<T>::operator++(int) {
-    TreeIterator<T> tmp(*this);
-    this->operator++();
-    return tmp;
-}
-
-template<typename T>
-TreeIterator<T> &TreeIterator<T>::operator--() {
-    this->prev();
-    return *this;
-}
-
-template<typename T>
-TreeIterator<T> TreeIterator<T>::operator--(int) {
-    TreeIterator<T> tmp(*this);
-    this->operator--();
-    return tmp;
-}
-
-#endif // SETLIB__TREE_ITERATOR
+#endif // setlib__tree_iterator
