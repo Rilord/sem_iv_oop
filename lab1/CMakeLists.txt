@@ -1,148 +1,36 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(lab1 VERSION 0.1 LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 17)
+project(lab_1 LANGUAGES CXX)
+
+add_definitions(-Wall -Wextra)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(./vertex)
+include_directories(./manager)
+include_directories(./model)
+include_directories(./errors)
+include_directories(./ui)
+include_directories(./utils)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(PROJECT_SOURCES 
+    ./vertex/vertex.cpp
+    ./vertex/edge.cpp
+    ./vertex/vertex_array.cpp
+    ./vertex/vertex.h
+    ./vertex/edge.h
+    ./vertex/vertex_array.h
+    ./model/model.cpp
+    ./model/model.h
+    ./model/model_loader.cpp
+    ./model/model_transform.cpp
+    ./manager/manager.cpp)
 
-set(app_name "lab1")
-add_library(stb INTERFACE)
-
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	message("Good choice, buddy!")
-
-endif()
-if (UNIX)
-
-##########
-
-
-# OpenGL
-
-find_package(OpenGL REQUIRED)
-
-if (OPENGL_FOUND)
-    include_directories(${OPENGL_INCLUDE_DIR})
-endif()
-
-
-# GLEW 
-
-find_library(GLEW_DYLIB GLEW ${CMAKE_SOURCE_DIR}/external/glew/lib)
-add_library(glew SHARED IMPORTED)
-if (APPLE)
-    set_property(TARGET glew PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/glew/lib/libGLEW.2.2.0.dylib)
-else()
-    set_property(TARGET glew PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/glew/lib/libGLEW.so.2.2.0)
-endif()
-
-set_property(TARGET glew PROPERTY IMPORTED_IMPLIB ${GLEW_DYLIB})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 
 
-######
-
-#GLFW
-
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/glfw)
-
-set(app_includes ${app_includes} ${CMAKE_SOURCE_DIR}/external/glfw/include/)
-
-set(app_libs ${app_libs} glfw ${GLFW_LIBRARIES})
 
 
-
-#####
-
-# IMGUI 
-set(imgui_srcs 
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_impl_opengl3.cpp
-    )
-
-add_library(imgui STATIC ${imgui_srcs})
-
-target_link_libraries(imgui glew)
-
-target_include_directories(imgui PUBLIC
-    ${CMAKE_SOURCE_DIR}/external/imgui/
-    ${CMAKE_SOURCE_DIR}/external/glew/include/
-    ${CMAKE_SOURCE_DIR}/external/glfw/include/
-    )
-
-set(app_includes ${app_includes}
-    ${CMAKE_SOURCE_DIR}/external/imgui
-    )
-########## IMPLOT
-
-set(implot_srcs
-    ${CMAKE_SOURCE_DIR}/external/implot/implot_items.cpp
-    ${CMAKE_SOURCE_DIR}/external/implot/implot.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/external/imgui/imgui_impl_opengl3.cpp
-    )
-
-add_library(implot STATIC ${implot_srcs})
-
-
-target_include_directories(implot PUBLIC
-    ${CMAKE_SOURCE_DIR}/external/imgui/
-    ${CMAKE_SOURCE_DIR}/external/implot/
-    ${CMAKE_SOURCE_DIR}/external/glew/include/
-    ${CMAKE_SOURCE_DIR}/external/glfw/include/
-    )
-
-
-##########
-
-
-set(app_includes ${app_includes}
-    ${CMAKE_SOURCE_DIR}/external/imgui
-    )
-
-set(app_includes ${app_includes}
-    ${CMAKE_SOURCE_DIR}/external/implot
-    )
-set(app_libs ${app_libs} imgui)
-set(app_libs ${app_libs} implot)
-##########
-
-
-
-# 3D RENDERER
-
-
-file (GLOB app_srcs
-    ${CMAKE_SOURCE_DIR}/src/*.cpp
-    )
-
-set(app_include ${CMAKE_SOURCE_DIR}/include ${app_includes})
-
-###########
-
-# executable
-
-set(app_libs ${app_libs} ${OPENGL_LIBRARY})
-
-add_executable(${app_name}  ${app_srcs})
-
-target_include_directories(${app_name} PUBLIC ${app_includes})
-
-
-target_link_libraries(${app_name} ${app_libs})
-
-endif ()
