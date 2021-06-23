@@ -1,4 +1,5 @@
 #include "edge.h"
+#include "edge_array.h"
 
 face_t init_face(const unsigned int i1, const unsigned int i2, const unsigned int i3) {
     face_t face;
@@ -9,3 +10,4 @@ face_t init_face(const unsigned int i1, const unsigned int i2, const unsigned in
 
     return face;
 }
+

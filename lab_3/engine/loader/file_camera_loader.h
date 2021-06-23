@@ -1,0 +1,23 @@
+//
+// Created by Kirill Diordiev on 25.05.2021.
+//
+
+#pragma once
+
+#include <loader/base_camera_loader.h>
+
+namespace Load {
+    class FileCameraLoader : public BaseCameraLoader {
+    public:
+        FileCameraLoader();
+        explicit FileCameraLoader(std::shared_ptr<std::ifstream> &fin);
+        ~FileCameraLoader() override = default;
+        std::shared_ptr<Object> load(const std::shared_ptr<CameraBuilder> &builder) override;
+
+        void open(std::string &fname) override;
+        void close() override;
+
+    protected:
+        std::shared_ptr<std::ifstream> file;
+    };
+}// namespace Load

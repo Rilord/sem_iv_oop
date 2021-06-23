@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 int scan_model(model_t &model, FILE *file);
-int scan_file(model_t &model, const string &filename);
-int save_model(const model_t &model, const string &filename);
+int scan_file(model_t &model, const char *filename);
+int save_to_file(const model_t& model, const char* filename);
 
 #endif // MODEL__LOADER_
