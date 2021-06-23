@@ -52,3 +52,4 @@ int scan_vertices(vertex_array_t &va, FILE *file) {
 
     return rc;
 }
+

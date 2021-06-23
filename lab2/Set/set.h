@@ -1,43 +1,124 @@
-#ifndef _SETLIB__SET
-#define _SETLIB__SET
+#pragma once
 
+// SYSTEM
+#include <memory>
 #include <initializer_list>
-#include "tree.h"
+#include <chrono>
 
-template <class T>
-class Set {
+// LIBS
+#include <base.h>
+#include <set_iterator.h>
+#include <node.h>
 
-public:
-    using valueType = T;
-    using std::shared_ptr<set_node<T>> = ptr;
-    using tree = tree<valueType>;
+namespace math_set {
+
+    template<class T>
+    class set: public base {
+        public:
+            // Constructors
+            set() = default;
+            set(const set<T> &list) noexcept(false);
+            set(set<T> &&list) noexcept;
+            set(std::initializer_list<T> elems);
+
+            // Destructor
+            ~set() override;
+
+            // Add, if exists return false
+            bool add(const T &val) noexcept(false);
+            bool add(T &&rval) noexcept(false);
+            bool add(std::initializer_list<T> init_list) noexcept(false);
+            void add(T *ilist, size_t len) noexcept(false);
+            set<T> &operator+=(const set<T> &set);
+            set<T> &operator+=(const T & data);
+            
+            set<T> update(const T &value) noexcept(false);
+            set<T> update(T &&value) noexcept(false);
+            set<T> update(std::initializer_list<T> ilist) noexcept(false);
+            set<T> update(T *ilist, size_t len) noexcept(false);
+
+            set<T>  operator+(const set<T> &set);
+            set<T>  operator+(const T & data);
 
 
-    explicit Set() = default;
-    Set(std::initializer_list<T> items);
+            // intersection group
 
-    ~Set() override = default;
+            set<T>  intersection(const set<T> &set);
+            set<T>  intersection(const T & data);
+            set<T> intersection(std::initializer_list<T> init_list);
+            set<T> intersection(T *ilist, size_t len);
 
-    void insert(const valueType &value) {
-        tree.insert(value);
-    }
-    void erase(const valueType &value);
-    void clear() {
-        impl.clear();
-    }
-
-    bool contains(const valueType &value) const;
-    int size() const;
-    bool isEmpty();
+            set<T>  operator&(const set<T> &set);
+            set<T>  operator&(const T & data);
+            set<T>  &operator&=(const set<T> &set);
+            set<T>  &operator&=(const T & data);
 
 
-private:
-    tree impl;
+            // Combination group
+            set<T> combine(const set<T> &set);
+            set<T> combine(const T & data);
+            set<T> combine(std::initializer_list<T> init_list);
+            set<T> combine(T *ilist, size_t len);
 
-protected:
-    std::pair<set_iterator<T>, bool> insert(
+            set<T> operator|(const set<T> &set);
+            set<T> operator|(const T & data);
+            set<T> &operator|=(const set<T> &set);
+            set<T> &operator|=(const T & data);
 
-};
+            // Difference group
+            set<T> diff(const set<T> &set);
+            set<T> diff(const T & data);
+            set<T> diff(std::initializer_list<T> init_list);
+            set<T> diff(T *ilist, size_t len);
+
+            set<T> operator-(const set<T> &set);
+            set<T> operator-(const T & data);
+            set<T> &operator-=(const set<T> &set);
+            set<T> &operator-=(const T & data);
 
 
-#endif // _SETLIB__SET
+            // Symetrical difference group
+            set<T> sym_diff(const set<T> &set);
+            set<T> sym_diff(const T & data);
+            set<T> sym_diff(std::initializer_list<T> init_list);
+            set<T> sym_diff(T *ilist, size_t len);
+
+            set<T> operator^(const set<T> &set);
+            set<T> operator^(const T &data);
+            set<T> &operator^=(const set<T> &set);
+            set<T> &operator^=(const T &data);
+
+            // Erase
+            void erase(const T &val);
+            void erase(set_iterator<T> where);
+            void erase(set_iterator<T> start, set_iterator<T> end);
+
+            void clear() override;
+
+
+
+            set<T> &operator=(const set<T> &list) const;
+            set<T> &operator=(set<T> &&list) const;
+
+            bool operator==(const set<T> &list) const;
+            bool operator!=(const set<T> &list) const;
+
+            set_iterator<T> begin() const;
+            set_iterator<T> end() const;
+
+            // По-русски мощность
+            size_t cardinality(); 
+
+        private:
+
+            std::shared_ptr<node<T>> head;
+            std::shared_ptr<node<T>> tail;
+
+        protected:
+            set_iterator<T> find(const T & val) const;
+            bool insert(const std::shared_ptr<node<T>> &node) noexcept;
+
+
+
+    };
+}

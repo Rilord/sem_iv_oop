@@ -14,8 +14,6 @@ set(REQUIRED_LIBS_QUALIFIED Qt5::Core Qt5::Gui Qt5::Widgets)
 set (SRC
         src/control_panel/control_panel.cpp
         src/control_panel/control_panel.h
-        src/cabin/cabin.cpp
-        src/cabin/cabin.h
         src/door/door.cpp
         src/door/door.h
         src/elevator/elevator.cpp
@@ -24,9 +22,12 @@ set (SRC
         src/constants.h
         )
 
+set(INCLUDES
+        src/constants.h)
+
 add_library(${PROJECT_NAME}
         ${SRC}
-        ${})
+        ${INCLUDES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         ./include/
